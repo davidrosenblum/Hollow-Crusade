@@ -2,7 +2,7 @@
   "scripts": {
     "start": "react-scripts start",
     "electron": "electron ./public/index.js",
-    "electron-test": "electron ./public/index.js --test",
+    "electron-test": "electron ./public/index.js -test",
     "build": "react-scripts build .",
     "publish": ""
   },

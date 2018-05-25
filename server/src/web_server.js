@@ -27,8 +27,15 @@ app.route("/api/accounts/create/*").post((req, res) => {
 
     database.createAccount(username, password, err => {
         if(err){
-            res.writeHead(400);
-            res.end(err.message);
+            if(err.errno === 1062){
+                res.writeHead(400);
+                res.end(`Username "${username}" is unavailable.`);
+            }
+            else{
+                console.log(err.message);
+                res.writeHead(500);
+                res.end("Server error.");
+            }
         }
         else{
            res.end(`Account "${username}" created.`); 
