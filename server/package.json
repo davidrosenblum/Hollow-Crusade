@@ -1,0 +1,19 @@
+{
+  "scripts": {
+    "start": "pm2 start src/game_server.js && pm2 start src/web_server.js"
+  },
+  "engines": {
+    "node": ">=10.2.0"
+  },
+  "dependencies": {
+    "dgram": "^1.0.1",
+    "express": "^4.16.3",
+    "fs": "0.0.1-security",
+    "mysql": "^2.15.0",
+    "net": "^1.0.2",
+    "pm2": "^2.10.4"
+  },
+  "devDependencies": {
+    "nodemon": "^1.17.5"
+  }
+}
