@@ -1,5 +1,5 @@
 /*
-    Electron start script
+    Electron main script
 */
 
 let electron = require("electron");
@@ -14,7 +14,9 @@ electron.app.on("ready", evt => {
         center: true
     });
 
-    if(typeof process.argv["--test"] !== "undefined"){
+    if(process.argv.includes("-test")){
+        console.log("(Running test mode)");
+
         window.loadURL("http://localhost:3000");
     }
     else{

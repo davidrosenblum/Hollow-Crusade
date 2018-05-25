@@ -1,9 +1,8 @@
 {
   "scripts": {
-    "start": "pm2 start src/game_server.js && pm2 start src/web_server.js"
-  },
-  "engines": {
-    "node": ">=10.2.0"
+    "start": "pm2 start src/game_server.js && pm2 start src/web_server.js",
+    "web-test": "nodemon src/web_server.js",
+    "game-test": "nodemon src/game_server.js"
   },
   "dependencies": {
     "dgram": "^1.0.1",
