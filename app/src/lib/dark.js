@@ -405,6 +405,10 @@ let dark = (function(){
         }
 
         removeChildren(array){
+            if(!array){
+                array = this._children;
+            }
+
             for(let object of array){
                 this.removeChild(object);
             }
@@ -556,6 +560,16 @@ let dark = (function(){
                     this.drawHitbox();
                 }
             }
+        }
+
+        changeImage(url){
+            this._image = Sprite.EMPTY_IMAGE;
+
+            AssetManager.loadImage(url, (err, img) => {
+                if(!err){
+                    this._image = img;
+                }
+            });
         }
 
         get image(){
