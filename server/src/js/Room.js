@@ -10,6 +10,8 @@ let Room = class Room extends EventEmitter{
 
         this.sockets = {};
         this.objects = {};
+
+        this.lastObjectID = 0;
     }
 
     addSocket(socket){
@@ -39,7 +41,7 @@ let Room = class Room extends EventEmitter{
         }
     }
 
-    removeObjectByID(id){
+    removeObject(id){
         let object = this.objects[id];
         if(object){
             delete this.objects[id];

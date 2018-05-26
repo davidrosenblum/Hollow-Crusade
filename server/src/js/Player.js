@@ -4,7 +4,8 @@ let GameCombatObject = require("./GameCombatObject"),
 let Player = class Player extends GameCombatObject{
     constructor(saveData){
         super({
-            name: saveData.name
+            name: saveData.name,
+            type: "player"
         });
 
         this.xp = 0;
@@ -29,7 +30,7 @@ let Player = class Player extends GameCombatObject{
     restoreLevel(level){
         let lvls = level - 1;
 
-        for(let i = 0; i < levels; i++){
+        for(let i = 0; i < lvls; i++){
             this.levelUp(false);
         }
     }
@@ -163,6 +164,12 @@ let Player = class Player extends GameCombatObject{
 
     get xpToGo(){
         return this.xpNeeded - this.xp;
+    }
+
+    getSpawnData(){
+        let data = super.getSpawnData();
+        data.skinID = this.skinID;
+        return data;
     }
 };
 

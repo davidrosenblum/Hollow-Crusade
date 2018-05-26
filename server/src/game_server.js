@@ -5,12 +5,14 @@ let net = require("net"),
 
 let DatabaseInquisitor = require("./js/DatabaseInquisitor"),
     GameEvent = require("./js/GameEvent"),
+    Player = require("./js/Player"),
     Room = require("./js/Room"),
     Settings = require("./js/Settings"); 
 
 const VERSION = "0.1.0",
     CLIENT_VERSION = "0.1.0",
-    MSG_DELIM = "?&?";
+    MSG_DELIM = "?&?",
+    DEFAULT_ROOM = "main";
 
 const TEAM_ID_PLAYERS = 1,
     TEAM_ID_ENEMIES = 2,
@@ -48,7 +50,7 @@ let settings = null,
     database = null,
     sockets = {},
     accounts = {},
-    rooms = {main: new Room(1, "Main")},
+    rooms = null,
     lastSocketID = 0;
 
 net.Socket.prototype.toString = function(){
@@ -120,7 +122,7 @@ let processSocketData = function(socket, opc, data){
         processCharacterList(socket);
     }
     else if(opc === OPC_CHARACTER_SELECT){
-        processCharacterSelect(socket. data.name || "");
+        processCharacterSelect(socket, data.name || "");
     }
     else if(opc === OPC_CHARACTER_CREATE){
         processCharacterCreate(socket, data.name || "", data.skinID || 1);
@@ -129,7 +131,7 @@ let processSocketData = function(socket, opc, data){
         processCharacterDelete(socket, data.name || "");
     }
     else if(opc === OPC_ROOM_CHANGE){
-
+        processRoomChange(socket, data.roomName);
     }
     else if(opc === OPC_CHAT_MESSAGE){
         
@@ -182,8 +184,9 @@ let processSocketLogin = function(socket, username, password, version){
 let processSocketLogout = function(socket){
     if(socket.username){
         delete accounts[socket.username]; 
-        send(socket, OPC_LOGOUT, "You have logged out.", STATUS_GOOD);
+        socket.username = null;
 
+        send(socket, OPC_LOGOUT, "You have logged out.", STATUS_GOOD);
     }
     else{
         send(socket, OPC_LOGOUT, "You are not logged in.", STATUS_BAD);
@@ -245,7 +248,7 @@ let processCharacterSelect = function(socket, name){
         return;
     }
 
-    database.retrieveCharacter(name, (err, rows) => {
+    database.retrieveCharacter(socket.username, name, (err, rows) => {
         if(err){
             console.log(err.message);
             send(OPC_CHARACTER_SELECT, "Server error.", STATUS_ERR);
@@ -255,9 +258,22 @@ let processCharacterSelect = function(socket, name){
         }
         else{
             socket.player = new Player(rows[0]);
-            rooms["main"].addSocket(socket);
+            socket.player.teamID = TEAM_ID_PLAYERS;
+            socket.player.ownerID = socket.socketID;
+
+            rooms[DEFAULT_ROOM].addSocket(socket);
         }
     });
+};
+
+let processRoomChange = function(socket, roomName){
+    let room = rooms[roomName] || rooms[DEFAULT_ROOM];
+
+    if(socket.room){
+        socket.room.removeSocket(socket);
+    }
+
+    room.addSocket(socket);
 };
 
 let send = function(socket, opc, data, status=STATUS_GOOD){
@@ -268,6 +284,75 @@ let send = function(socket, opc, data, status=STATUS_GOOD){
     };
 
     socket.write(JSON.stringify(message) + MSG_DELIM);
+};
+
+let handleRoomAddSocket = function(evt){
+    let room = evt.emitter,
+        target = evt.target;
+
+    send(target, OPC_ROOM_CHANGE, {roomName: room.roomName, roomID: room.roomID, op: "join"});
+
+    room.forEachObject(object => {
+        send(target, OPC_OBJECT_CREATE, object.getSpawnData());
+    });
+
+    room.addObject(target.player);
+
+    room.forEachSocket(socket => {
+        send(socket, OPC_CHAT_MESSAGE, `${target.player.name} connected.`);
+    });
+};
+
+let handleRoomRemoveSocket = function(evt){
+    let room = evt.emitter,
+        target = evt.target;
+
+    send(target, OPC_ROOM_CHANGE, {roomName: room.roomName, roomID: room.roomID, op: "leave"});
+
+    room.removeObject(target.player.objectID);
+
+    room.forEachSocket(socket => {
+        send(socket, OPC_CHAT_MESSAGE, `${target.player.name} disconnected.`);
+    });
+};
+
+let handleRoomAddObject = function(evt){
+    let room = evt.emitter,
+        object = evt.target;
+
+    room.forEachSocket(socket => {
+        send(socket, OPC_OBJECT_CREATE, object.getSpawnData());
+    });
+};
+
+let handleRoomRemoveObject = function(evt){
+    let room = evt.emitter,
+        object = evt.target;
+
+    room.forEachSocket(socket => {
+        send(socket, OPC_OBJECT_DELETE, {objectID: object.objectID});
+    });
+};
+
+let handleRoomUpdateObject = function(evt){
+    let room = evt.emitter,
+        object = evt.target;
+
+    // UDP update...
+}
+
+let createRooms = function(){
+    rooms = {
+        "main": new Room(1, "main")
+    };
+
+    for(let room in rooms){
+        rooms[room].on(GameEvent.ROOM_ADD_SOCKET, handleRoomAddSocket);
+        rooms[room].on(GameEvent.ROOM_REMOVE_SOCKET, handleRoomRemoveSocket);
+        rooms[room].on(GameEvent.ROOM_ADD_OBJECT, handleRoomAddObject);
+        rooms[room].on(GameEvent.ROOM_REMOVE_OBJECT, handleRoomRemoveObject);
+        rooms[room].on(GameEvent.ROOM_UPDATE_OBJECT, handleRoomUpdateObject);
+    }
 };
 
 let connectDB = function(callback){
@@ -318,6 +403,8 @@ let init = function(){
             }
         });
     });
+
+    createRooms();
 };
 
 console.log("  ______________________");
