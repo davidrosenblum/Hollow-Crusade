@@ -2,9 +2,13 @@ import React from 'react';
 import Loading from './Loading.jsx';
 import Login from './Login.jsx'
 import CharacterSelect from './CharacterSelect.jsx';
+import CharacterCreate from './CharacterCreate.jsx';
 import Modal from './Modal.jsx';
 import Client from '../module/Client';
 import UIController from '../module/UIController';
+import RequestSender from '../module/RequestSender';
+
+import './App.css';
 
 class App extends React.Component{
     constructor(props){
@@ -26,7 +30,7 @@ class App extends React.Component{
                 characterListLoading: true
             });
 
-            Client.requestCharacterList();
+            RequestSender.characterList();
         }
 
         this.setState({
@@ -64,6 +68,7 @@ class App extends React.Component{
                 <Loading currMenu={this.state.currMenu} message={this.state.message} />
                 <Login currMenu={this.state.currMenu} />
                 <CharacterSelect currMenu={this.state.currMenu} characterList={this.state.characterList} characterListLoading={this.state.characterListLoading} />
+                <CharacterCreate currMenu={this.state.currMenu} />
                 <Modal message={this.state.modalMessage}/>
             </div>
         );

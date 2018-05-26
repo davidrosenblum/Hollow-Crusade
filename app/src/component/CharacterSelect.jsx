@@ -1,6 +1,7 @@
 import React from 'react';
 import UIController from '../module/UIController';
 import Client from '../module/Client';
+import RequestSender from '../module/RequestSender';
 
 class CharacterSelect extends React.Component{
     constructor(props){
@@ -9,6 +10,11 @@ class CharacterSelect extends React.Component{
 
     onNewBtnClick(evt){
         UIController.showCharacterCreate();
+    }
+
+    onLogoutClick(evt){
+        UIController.showLogin();
+        RequestSender.logout();
     }
 
     render(){
@@ -38,10 +44,10 @@ class CharacterSelect extends React.Component{
                             Level {data.level}
                         </td>
                         <td>
-                            <button className="action-btn" onClick={Client.requestCharacterSelect(data.name)}>Select</button>
+                            <button className="action-btn" onClick={evt=>RequestSender.selectCharacter(data.name)}>Select</button>
                         </td>
                         <td>
-                            <button className="action-btn" onClick={evt=>Client.requestCharacterDelete(data.name)}>Delete</button>
+                            <button className="action-btn" onClick={evt=>RequestSender.deleteCharacter(data.name)}>Delete</button>
                         </td>
                     </tr>
                 );
@@ -59,11 +65,16 @@ class CharacterSelect extends React.Component{
 
         return (
             <div data-name="character-select">
-                <table>
-                    <tbody>
-                        {rows}
-                    </tbody>
-                </table>
+                <div>
+                    <table>
+                        <tbody>
+                            {rows}
+                        </tbody>
+                    </table>
+                </div>
+                <div>
+                    <button className="action-btn" onClick={this.onLogoutClick.bind(this)}>Logout</button>
+                </div>
             </div>
         );
     }

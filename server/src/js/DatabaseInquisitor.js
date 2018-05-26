@@ -108,7 +108,7 @@ let DatabaseInquisitor = class DatabaseInquisitor{
         );
     }
 
-    createCharacter(username, name, skinID=1){
+    createCharacter(username, name, skinID=1, callback){
         this.conn.query(
             `INSERT INTO characters(account_id, name, skin_id)
             VALUES(
@@ -117,7 +117,7 @@ let DatabaseInquisitor = class DatabaseInquisitor{
                     WHERE username = '${username}'
                 ),
                 '${name}',
-                ${skin_id}
+                ${skinID}
             )`,
             callback
         );

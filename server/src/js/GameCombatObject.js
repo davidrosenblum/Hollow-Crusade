@@ -83,14 +83,15 @@ let GameCombatObject = class GameCombatObject extends GameObject{
     }
 
     getSpawnData(){
-        return {
-            objectID: this.objectID,
-            ownerID: this.ownerID,
-            teamID: this.teamID,
-            name: this.name,
-            type: this.type,
-            moveSpeed: this.moveSpeed
-        };
+        let data = this.getData();
+        
+        data.ownerID = this.ownerID,
+        data.teamID = this.teamID;
+        data.name = this.name;
+        data.type = this.type;
+        data.moveSpeed = this.moveSpeed;
+
+        return data;
     }
 
     getStats(){

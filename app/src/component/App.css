@@ -1,0 +1,37 @@
+.app-container{
+
+}
+
+.app-menu{
+    padding: 10px;
+    margin: 10px;
+    border: 1px solid gray;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.action-btn{
+    border: 1px solid black;
+    border-radius: 4px;
+    background-color: white;
+    padding: 3px;
+    min-width: 75px;
+    transition: 0.5s;
+}
+
+.action-btn:hover{
+    background-color: black;
+    color: white;
+}
+
+.action-input{
+    border: 1px solid gray;
+    border-radius: 3px;
+    background-color: white;
+    width: 250px;
+    padding: 6px;
+}
+
+.centered{
+    text-align: center;
+}

@@ -17,5 +17,19 @@
 }
 
 #modal-content{
+    border: 1px solid gray;
+    background-color: white;
+    width: 400px;
+    margin: auto;
+    margin-top: 10%;
+    text-align: center;
+    padding: 8px;
+}
 
+#modal-body{
+    min-height: 25px;
+}
+
+#modal-footer{
+    margin-top: 10px;
 }

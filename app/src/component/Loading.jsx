@@ -1,6 +1,8 @@
 import React from 'react';
 import Client from '../module/Client';
 
+import './Loading.css';
+
 class Loading extends React.Component{
     constructor(props){
         super(props);
@@ -12,12 +14,12 @@ class Loading extends React.Component{
         }
 
         return (
-            <div data-name="loading">
+            <div id="loading-menu" data-name="loading" className="app-menu">
                 <div>
                     {this.props.message}
                 </div>
                 <div>
-                    Hollow Crusade | {Client.VERSION}
+                    Hollow Crusade v{Client.VERSION}
                 </div>
             </div>
         );

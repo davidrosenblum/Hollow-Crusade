@@ -1,4 +1,5 @@
 import UIController from './UIController';
+import GameController from './GameController';
 import { OPC, Status } from './Comm';
 import dark from '../lib/dark';
 
@@ -88,33 +89,34 @@ let Client = class Client{
         else if(opc === OPC.CHARACTER_DELETE){
             UIController.modal(data.message);
         }
-    }
 
-    requestCharacterList(){
-        this.send(OPC.CHARACTER_LIST);
-    }
-
-    requestCharacterDelete(name){
-        this.send(OPC.CHARACTER_DELETE, {name: name});
-    }
-
-    requestCharacterSelect(name){
-        console.log(name);
-        //this.send(OPC.CHARACTER_SELECT, {name: name});
-    }
-
-    submitLogin(username, password){
-        if(!username){
-            UIController.modal("Please enter your username.");
-            return;
+        else if(opc === OPC.CHARACTER_CREATE){
+            if(status === Status.GOOD){
+                UIController.showCharacterSelect();
+            }
+            else{
+                UIController.modal(data.message);
+            }
         }
 
-        if(!password){
-            UIController.modal("Please enter your password.");
-            return;
+        else if(opc === OPC.CHARACTER_SELECT){
+            if(status !== Status.GOOD){
+                UIController.modal(data.message);
+            }
         }
 
-        this.send(OPC.LOGIN, {username: username, password: password, version: this.VERSION});
+        else if(opc === OPC.ROOM_CHANGE){
+            if(status === Status.GOOD){
+                UIController.showGame();
+            
+                if(data.op === "join"){
+                    GameController.loadMap(data.roomName);
+                }
+                else if(data.op === "leave"){
+                    GameController.unloadMap();
+                }
+            }
+        }
     }
 
     send(opc, data){
