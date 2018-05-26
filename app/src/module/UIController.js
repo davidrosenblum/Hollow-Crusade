@@ -33,6 +33,22 @@ let UIController = class UIController extends dark.EventEmitter{
     modal(message){
         this.emit({type: "modal", message: message});
     }
+
+    hudChat(chat){
+        this.emit({type: "hud-chat", chat: chat});
+    }
+
+    hudTarget(data){
+
+    }
+
+    hudSelf(data){
+
+    }
+
+    hudSpellTray(state){
+
+    }
 };
 
 export default new UIController();

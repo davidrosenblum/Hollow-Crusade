@@ -30,12 +30,18 @@ let RequestSender = class RequestSender{
         Client.send(OPC.ROOM_STATS, {roomID: id});
     }
 
-    static changeRooms(id){
-        Client.send(OPC.ROOM_CHANGE, {roomID: id});
+    static changeRooms(name, id){
+        // id = join a specific room (useful for instances)
+        // name = join a map (figures out the ID)
+        Client.send(OPC.ROOM_CHANGE, {roomID: id, roomName: name});
     }
 
     static chat(chat){
         Client.send(OPC.CHAT_MESSAGE, {chat: chat});
+    }
+
+    static objectStats(id){
+        Client.send(OPC.OBJECT_STATS, {objectID: id});
     }
 };
 

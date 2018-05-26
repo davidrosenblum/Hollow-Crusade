@@ -59,64 +59,101 @@ let Client = class Client{
 
     processServerData(opc, data, status){
         if(opc === OPC.LOGIN){
-            if(status === Status.GOOD){
-                UIController.showCharacterSelect();
-                this.socketID = data.socketID || -1;
-            }
-            else if(data.message){
-                UIController.modal(data.message);
-            }
+            this.handleLogin(data, status);
         }
-
         else if(opc === OPC.LOGOUT){
-            if(status === Status.GOOD){
-                this.socketID = -1;
-            }
-            else{
-                UIController.modal(data.message);
-            }
+            this.handleLogout(data, status);
         }
-
         else if(opc === OPC.CHARACTER_LIST){
-            if(status === Status.GOOD){
-                UIController.displayCharacterList(data);
-            }
-            else if(data.message){
-                UIController.modal(data.message);
-            }
+            this.handleCharacterList(data, status);
         }
-
         else if(opc === OPC.CHARACTER_DELETE){
+            this.handleCharacterDelete(data, status);
+        }
+        else if(opc === OPC.CHARACTER_CREATE){
+            this.handleCharacterCreate(data, status);
+        }
+        else if(opc === OPC.CHARACTER_SELECT){
+            this.handleCharacterSelect(data, status);
+        }
+        else if(opc === OPC.ROOM_CHANGE){
+            this.handleRoomChange(data, status);
+        }
+        else if(opc === OPC.CHAT_MESSAGE){
+            this.handleChat(data);
+        }
+        else if(opc === OPC.OBJECT_CREATE){
+            GameController.createObject(data);
+        }
+        else if(opc === OPC.OBJECT_DELETE){
+            GameController.deleteObject(data.objectID || -1);
+        }
+    }
+
+    handleLogin(data, status){
+        if(status === Status.GOOD){
+            UIController.showCharacterSelect();
+            this.socketID = data.socketID || -1;
+            console.log(`I'm client #${this.socketID}.`);
+        }
+        else if(data.message){
             UIController.modal(data.message);
         }
+    }
 
-        else if(opc === OPC.CHARACTER_CREATE){
-            if(status === Status.GOOD){
-                UIController.showCharacterSelect();
+    handleLogout(data, status){
+        if(status === Status.GOOD){
+            this.socketID = -1;
+        }
+        else{
+            UIController.modal(data.message);
+        }
+    }
+
+    handleCharacterList(data, status){
+        if(status === Status.GOOD){
+            UIController.displayCharacterList(data);
+        }
+        else if(data.message){
+            UIController.modal(data.message);
+        }
+    }
+
+    handleCharacterDelete(data, status){
+        UIController.modal(data.message);
+    }
+
+    handleCharacterCreate(data, status){
+        if(status === Status.GOOD){
+            UIController.showCharacterSelect();
+        }
+        else{
+            UIController.modal(data.message);
+        }
+    }
+
+    handleCharacterSelect(data, status){
+        if(status !== Status.GOOD){
+            UIController.modal(data.message);
+        }
+    }
+
+    handleRoomChange(data, status){
+        if(status === Status.GOOD){
+            UIController.showGame();
+        
+            if(data.op === "join"){
+                GameController.loadMap(data.roomName);
             }
-            else{
-                UIController.modal(data.message);
+            else if(data.op === "leave"){
+                GameController.unloadMap();
             }
         }
+    }
 
-        else if(opc === OPC.CHARACTER_SELECT){
-            if(status !== Status.GOOD){
-                UIController.modal(data.message);
-            }
-        }
-
-        else if(opc === OPC.ROOM_CHANGE){
-            if(status === Status.GOOD){
-                UIController.showGame();
-            
-                if(data.op === "join"){
-                    GameController.loadMap(data.roomName);
-                }
-                else if(data.op === "leave"){
-                    GameController.unloadMap();
-                }
-            }
-        }
+    handleChat(data){
+        let message = (data.sender) ? `${data.sender}: ${data.chat}` : `${data.chat}`;
+        UIController.hudChat(message);
     }
 
     send(opc, data){
