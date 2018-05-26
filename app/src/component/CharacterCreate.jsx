@@ -2,6 +2,8 @@ import React from 'react';
 import UIController from '../module/UIController';
 import RequestSender from '../module/RequestSender';
 
+import './CharacterCreate.css';
+
 class CharacterCreate extends React.Component{
     constructor(props){
         super(props);
@@ -60,18 +62,20 @@ class CharacterCreate extends React.Component{
         }
 
         return (
-            <div data-name="character-create">
+            <div id="character-create-menu" data-name="character-create" className="app-menu">
                 <div>
-                    <input onKeyDown={this.updateName.bind(this)} type="text" placeholder="Enter name..."/>
+                    <input className="action-input" onInput={this.updateName.bind(this)} type="text" placeholder="Enter name..."/>
                 </div>
+                <br/>
                 <div>
                     <img src={this.currSkin.image} alt={`Skin-${this.state.currIndex}`} height="200px"/>
                 </div>
+                <br/>
                 <div>
-                    <button onClick={this.prev.bind(this)}>&larr;</button>
-                    <button onClick={this.onCancelBtnClick.bind(this)}>Cancel</button>
-                    <button onClick={this.submitCharacter.bind(this)}>Create</button>
-                    <button onClick={this.next.bind(this)}>&rarr;</button>
+                    <button className="action-btn" onClick={this.prev.bind(this)}>&larr;</button>
+                    <button className="action-btn" onClick={this.onCancelBtnClick.bind(this)}>Cancel</button>
+                    <button className="action-btn" onClick={this.submitCharacter.bind(this)}>Create</button>
+                    <button className="action-btn" onClick={this.next.bind(this)}>&rarr;</button>
                 </div>
             </div>
         );

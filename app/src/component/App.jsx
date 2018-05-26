@@ -35,7 +35,8 @@ class App extends React.Component{
 
         this.setState({
             currMenu: evt.menu,
-            message: evt.message || ""
+            message: evt.message || "",
+            modalMessage: ""
         });
     }
 

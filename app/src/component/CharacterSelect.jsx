@@ -3,6 +3,8 @@ import UIController from '../module/UIController';
 import Client from '../module/Client';
 import RequestSender from '../module/RequestSender';
 
+import './CharacterSelect.css';
+
 class CharacterSelect extends React.Component{
     constructor(props){
         super(props);
@@ -17,19 +19,7 @@ class CharacterSelect extends React.Component{
         RequestSender.logout();
     }
 
-    render(){
-        if(this.props.currMenu !== "character-select"){
-            return <span data-name="character-select"></span>
-        }
-
-        if(this.props.characterListLoading){
-            return (
-                <div>
-                    <div>Fetching characters...</div>
-                </div>
-            );
-        }
-
+    createRows(){
         let rows = [];
         for(let i = 0, data; i < 6; i++){
             if(this.props.characterList.length > i){
@@ -62,13 +52,28 @@ class CharacterSelect extends React.Component{
                 )
             }
         }
+        return rows;
+    }
+
+    render(){
+        if(this.props.currMenu !== "character-select"){
+            return <span data-name="character-select"></span>
+        }
+
+        if(this.props.characterListLoading){
+            return (
+                <div>
+                    <div>Fetching characters...</div>
+                </div>
+            );
+        }
 
         return (
-            <div data-name="character-select">
+            <div id="character-select-menu" data-name="character-select" className="app-menu">
                 <div>
-                    <table>
+                    <table id="character-table">
                         <tbody>
-                            {rows}
+                            {this.createRows()}
                         </tbody>
                     </table>
                 </div>
