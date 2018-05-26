@@ -14,12 +14,17 @@ class Loading extends React.Component{
         }
 
         return (
-            <div id="loading-menu" data-name="loading" className="app-menu">
-                <div>
-                    {this.props.message}
+            <div id="loading-menu" data-name="loading">
+                <h1>
+                    <img id="banner" src="banner.png" alt="Hollow Crusade"/>
+                </h1>
+                <div className="app-menu">
+                    <div>
+                        {this.props.message}
+                    </div>
                 </div>
                 <div>
-                    Hollow Crusade v{Client.VERSION}
+                    v{Client.VERSION}
                 </div>
             </div>
         );

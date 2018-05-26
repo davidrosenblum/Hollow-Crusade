@@ -1,0 +1,15 @@
+#character-table{
+    width: 90%;
+    margin: auto;
+}
+
+#character-table td[colspan="4"]{
+ /* do something ? */
+}
+
+#character-select-menu{
+    text-align: center;
+    width: 400px;
+    margin: auto;
+    margin-top: 10%;
+}

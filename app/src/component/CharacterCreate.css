@@ -1,0 +1,10 @@
+#character-create-menu{
+    width: 400px;
+    margin: auto;
+    margin-top: 10%;
+}
+
+#character-create-menu button{
+    margin-left: 5px;
+    margin-right: 5px;
+}
