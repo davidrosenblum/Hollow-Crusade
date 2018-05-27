@@ -155,7 +155,7 @@ let Client = class Client{
     }
 
     handleChat(data){
-        let message = (data.sender) ? `${data.sender}: ${data.chat}` : `${data.chat}`;
+        let message = (typeof data.sender === "string") ? (`${data.sender}: ${data.chat}`) : data.chat;
         UIController.hudChat(message);
     }
 

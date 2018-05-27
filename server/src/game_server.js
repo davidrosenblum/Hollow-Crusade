@@ -290,6 +290,7 @@ let processChat = function(socket, chat){
 let processAdminCommand = function(socket, chat){
     if(socket.accessLevel < 2){
         sendChat(socket, "You do not have admin command privilege.");
+        return;
     }
 
     let values = chat.split(" "),
@@ -379,9 +380,7 @@ let handleRoomAddSocket = function(evt){
 
     room.addObject(target.player);
 
-    room.forEachSocket(socket => {
-        send(socket, OPC_CHAT_MESSAGE, `${target.player.name} connected.`);
-    });
+    sendRoomChat(room, `${target.player.name} connected.`);
 };
 
 let handleRoomRemoveSocket = function(evt){
@@ -392,9 +391,7 @@ let handleRoomRemoveSocket = function(evt){
 
     room.removeObject(target.player.objectID);
 
-    room.forEachSocket(socket => {
-        send(socket, OPC_CHAT_MESSAGE, `${target.player.name} disconnected.`);
-    });
+    sendRoomChat(room, `${target.player.name} disconnected.`);
 };
 
 let handleRoomAddObject = function(evt){
