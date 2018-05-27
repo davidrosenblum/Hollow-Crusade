@@ -47,12 +47,12 @@ let Room = class Room extends EventEmitter{
             delete this.objects[id];
             object.objectID = -1;
 
-            this.emit(new GameEvent(GameEvent.ROOM_DELETE_OBJECT, object));
+            this.emit(new GameEvent(GameEvent.ROOM_REMOVE_OBJECT, {objectID: id}));
         }
     }
 
     updateObject(data){
-        let object = (data.objectID || -1);
+        let object = this.getObject(data.objectID || -1);
         if(object){
             object.applyUpdate(data);
 

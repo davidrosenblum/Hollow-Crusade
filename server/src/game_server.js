@@ -7,7 +7,8 @@ let DatabaseInquisitor = require("./js/DatabaseInquisitor"),
     GameEvent = require("./js/GameEvent"),
     Player = require("./js/Player"),
     Room = require("./js/Room"),
-    Settings = require("./js/Settings"); 
+    Settings = require("./js/Settings"),
+    UDPMessage = require("./js/UDPMessage");
 
 const VERSION = "0.1.0",
     CLIENT_VERSION = "0.1.0",
@@ -73,7 +74,13 @@ let server = net.createServer(socket => {
 server.on("listening", evt => console.log(`TCP server opened on port ${server.address().port}.`));
 
 let socket = dgram.createSocket("udp4", (msg, rinfo) => {
+    let data = UDPMessage.parse(msg.toString());
 
+    let socket = sockets[data.socketID];
+
+    if(socket && socket.room){
+        socket.room.updateObject(data);
+    }
 });
 socket.on("listening", evt => console.log(`UDP socket opened on port ${socket.address().port}.`));
 
@@ -112,8 +119,11 @@ let handleSocketData = function(socket, message){
 };
 
 let processSocketData = function(socket, opc, data){
-    if(opc === OPC_LOGIN){
-        processSocketLogin(socket, data.username || "", data.password || "", data.version || "");
+    if(opc === OPC_AUTH){
+        processAuth(socket, data.version || "", data.udpPort || -1);
+    }
+    else if(opc === OPC_LOGIN){
+        processSocketLogin(socket, data.username || "", data.password || "");
     }
     else if(opc === OPC_LOGOUT){
         processSocketLogout(socket);  
@@ -138,12 +148,17 @@ let processSocketData = function(socket, opc, data){
     }
 };
 
-let processSocketLogin = function(socket, username, password, version){
+let processAuth = function(socket, version, udpPort){
     if(version !== CLIENT_VERSION){
         send(socket, OPC_AUTH, "Wrong client version.", STATUS_BAD);
-        return;
     }
+    else{
+        socket.udpPort = udpPort;
+        send(socket, OPC_AUTH, {socketID: socket.socketID}, STATUS_GOOD);
+    }
+};
 
+let processSocketLogin = function(socket, username, password){
     if(socket.username){
         send(socket, OPC_LOGIN, "You are logged in already.", STATUS_BAD);
         return;
@@ -175,7 +190,7 @@ let processSocketLogin = function(socket, username, password, version){
 
                 accounts[username] = socket;
 
-                send(socket, OPC_LOGIN, {message: "Successful login.", socketID: socket.socketID}, STATUS_GOOD);
+                send(socket, OPC_LOGIN, "Successful login", STATUS_GOOD);
             }
         }
     });
@@ -417,6 +432,14 @@ let handleRoomUpdateObject = function(evt){
         object = evt.target;
 
     // UDP update...
+    let message = new UDPMessage(object.ownerID, object.objectID, object.x, object.y, object.anim).toString();
+    
+    // dumb var naming, sock = current client socket (TCP) and socket = UDP socket
+    room.forEachSocket(sock => {
+        if(sock.socketID !== object.ownerID){
+            socket.send(message, sock.udpPort);
+        }
+    });
 }
 
 let createRooms = function(){

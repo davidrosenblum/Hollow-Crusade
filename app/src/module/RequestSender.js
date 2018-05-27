@@ -1,9 +1,14 @@
 import Client from './Client';
 import { OPC } from './Comm';
+import UDPMessage from './UDPMessage';
 
 let RequestSender = class RequestSender{
+    static auth(port){
+        Client.send(OPC.AUTH, {version: Client.VERSION, udpPort: port});
+    }
+
     static login(username, password){
-        Client.send(OPC.LOGIN, {username: username, password: password, version: Client.VERSION})
+        Client.send(OPC.LOGIN, {username: username, password: password})
     }
 
     static logout(){
@@ -41,7 +46,8 @@ let RequestSender = class RequestSender{
     }
 
     static objectUpdate(data){
-        // udp...
+        let message = new UDPMessage(Client.socketID, data.objectID, data.x, data.y, data.anim);
+        Client.sendUDP(message);
     }
 
     static objectStats(id){
