@@ -3,17 +3,24 @@ import GameController from './GameController';
 import AssetPreloader from './AssetPreloader';
 import { OPC, Status } from './Comm';
 import dark from '../lib/dark';
+import UDPMessage from './UDPMessage';
+import RequestSender from './RequestSender';
 
 let net = window.require("net"),
     dgram = window.require("dgram");
 
-const MSG_DELIM = "?&?";
+const MSG_DELIM = "?&?",
+    TCP_PORT = 6615,
+    UDP_PORT = 6617;
+
+let tcpWait = {};
 
 let Client = class Client{
     constructor(){
         this.conn = null;
         this.socket = null;
         this.socketID = -1;
+        this.socketUDP = null;
 
         this.game = null;
 
@@ -22,13 +29,37 @@ let Client = class Client{
         AssetPreloader.preloadAssets();
     }
 
+    bind(callback){
+        this.socketUDP = dgram.createSocket("udp4", (msg, rinfo) => {
+            let data = UDPMessage.parse(msg.toString());
+
+            if(data.socketID !== this.socketID){
+                GameController.updateObject(data);
+            }
+        });
+
+        this.socketUDP.on("error", err => {
+            console.log(err.message);
+            UIController.showLoading("Unable to bind UDP socket.");
+        });
+        this.socketUDP.on("listening", evt => console.log(`UDP socket opened on port ${this.socketUDP.address().port}.`));
+
+        this.socketUDP.bind(0, callback);
+    }
+
+    sendUDP(message){
+        this.socketUDP.send(message.toString(), UDP_PORT);
+    }
+
     connect(){
         console.log("Connecting....");
         UIController.showLoading("Connecting to server...");
         
-        this.conn = net.createConnection(6615, () => {
+        this.conn = net.createConnection(TCP_PORT, () => {
             console.log("Connected!");
-            UIController.showLogin();
+            this.bind(() => {
+                RequestSender.auth(this.socketUDP.address().port);
+            });
         });
 
         this.conn.on("error", err => {
@@ -61,7 +92,10 @@ let Client = class Client{
     }
 
     processServerData(opc, data, status){
-        if(opc === OPC.LOGIN){
+        if(opc === OPC.AUTH){
+            this.handleAuth(data, status);
+        }
+        else if(opc === OPC.LOGIN){
             this.handleLogin(data, status);
         }
         else if(opc === OPC.LOGOUT){
@@ -93,11 +127,17 @@ let Client = class Client{
         }
     }
 
+    handleAuth(data, status){
+        if(status === Status.GOOD){
+            this.socketID = data.socketID || -1;
+            console.log(`I'm client #${this.socketID}.`);
+            UIController.showLogin();
+        }
+    }
+
     handleLogin(data, status){
         if(status === Status.GOOD){
             UIController.showCharacterSelect();
-            this.socketID = data.socketID || -1;
-            console.log(`I'm client #${this.socketID}.`);
         }
         else if(data.message){
             UIController.modal(data.message);
@@ -130,7 +170,7 @@ let Client = class Client{
         if(status === Status.GOOD){
             UIController.showCharacterSelect();
         }
-        else{
+        else if(data.message){
             UIController.modal(data.message);
         }
     }
@@ -160,12 +200,21 @@ let Client = class Client{
     }
 
     send(opc, data){
+        if(opc in tcpWait){
+            return;
+        }
+
         let message = {
             opc: opc,
             data: data
         };
 
         this.conn.write(JSON.stringify(message) + MSG_DELIM);
+
+        tcpWait[opc] = true;
+        setTimeout(() => {
+            delete tcpWait[opc];
+        }, 500);
     }
 };
 

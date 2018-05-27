@@ -7,7 +7,7 @@ let GameEvent = class GameEvent{
     }
 };
 GameEvent.ROOM_ADD_OBJECT = "room-add-object";
-GameEvent.ROOM_DELETE_OBJECT = "room-delete-object";
+GameEvent.ROOM_REMOVE_OBJECT = "room-remove-object";
 GameEvent.ROOM_UPDATE_OBJECT = "room-update-object";
 GameEvent.ROOM_ADD_SOCKET = "room-add-socket";
 GameEvent.ROOM_REMOVE_SOCKET = "room-remove-socket";
