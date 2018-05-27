@@ -125,6 +125,9 @@ let Client = class Client{
         else if(opc === OPC.OBJECT_DELETE){
             GameController.deleteObject(data.objectID || -1);
         }
+        else if(opc === OPC.OBJECT_STATS){
+            this.handleObjectStats(data, status);
+        }
     }
 
     handleAuth(data, status){
@@ -197,6 +200,12 @@ let Client = class Client{
     handleChat(data){
         let message = (typeof data.sender === "string") ? (`${data.sender}: ${data.chat}`) : data.chat;
         UIController.hudChat(message);
+    }
+
+    handleObjectStats(data, status){
+        if(status === Status.GOOD){
+            UIController.hudTarget(data);
+        }
     }
 
     send(opc, data){

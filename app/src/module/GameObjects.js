@@ -11,6 +11,7 @@ const GameObjects = {
     },
 
     SKINS: [
+        "player1",  // database doesn't recognize skin 0
         "player1",
         "player2",
         "player3"

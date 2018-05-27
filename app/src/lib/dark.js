@@ -101,8 +101,6 @@ let dark = (function(){
 
             this._drawXCache = x;
             this._drawYCache = y;
-            this._drawRightCache = x + width;
-            this._drawHeightCache = y + height;
 
             this.visible = true;
             this.showHitbox = false;
@@ -184,8 +182,6 @@ let dark = (function(){
 
             this.updateDrawXCache();
             this.updateDrawYCache();
-            this.updateDrawRightCache();
-            this.updateDrawBottomCache();
             
             this.emit(new Event(Event.MOVE));
         }
@@ -193,9 +189,6 @@ let dark = (function(){
         setSize(width, height){
             this._width = width;
             this._height = height;
-
-            this.updateDrawRightCache();
-            this.updateDrawBottomCache();
 
             this.emit(new Event(Event.RESIZE));
         }
@@ -239,8 +232,6 @@ let dark = (function(){
         set width(width){
             this._width = width;
 
-            this.updateDrawRightCache();
-
             if(this.hitbox !== this){
                 this.hitbox.centerTD();
             }
@@ -250,8 +241,6 @@ let dark = (function(){
 
         set height(height){
             this._height = height;
-
-            this.updateDrawBottomCache();
 
             if(this.hitbox !== this){
                 this.hitbox.centerTD();
@@ -896,7 +885,7 @@ let dark = (function(){
 
     let Scroller = class Scroller{
         constructor(scenes, bounds){
-            this._scroll = new Bounds(0, 0, stage.canvas.width, stage.canvas.height);
+            this._scroll = new Bounds(0, 0, stage.stageWidth, stage.stageHeight);
             this._bounds = new Bounds(bounds.x, bounds.y, bounds.width, bounds.height);
 
             this._scenes = [];
@@ -1332,7 +1321,7 @@ let dark = (function(){
 
                 stage.forAllChildren(child => {
                     if(mouse.hitboxCollision(child, true)){
-                        child.emit(new Event(Event.CLICK));
+                        child.emit(new Event(Event.CLICK, child));
                     }
                 });
             });

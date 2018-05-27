@@ -99,6 +99,18 @@ let GameCombatObject = class GameCombatObject extends GameObject{
         stats.name = this.name;
         stats.type = this.type;
         stats.teamID = this.teamID;
+        stats.moveSpeed = this.moveSpeed;
+        stats.health = this.health;
+        stats.healthCap = this.healthCap;
+        stats.mana = this.mana;
+        stats.manaCap = this.manaCap;
+        stats.defensePhysical = this.defense.physical;
+        stats.defenseElemental = this.defense.elemental;
+        stats.resistancePhysical = this.resistance.physical;
+        stats.resistanceElemental = this.resistance.elemental;
+        stats.criticalModifier = this.criticalModifier;
+        stats.criticalMultiplier = this.criticalMultiplier;
+        stats.damageMultiplier = this.damageMultiplier;
         return stats;
     }
 };
