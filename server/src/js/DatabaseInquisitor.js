@@ -150,14 +150,20 @@ let DatabaseInquisitor = class DatabaseInquisitor{
 
         let set = "";
         for(let k in data){
+            if(k === "name"){
+                continue;
+            }
+
             if(typeof data[k] === "string"){
-                set += `${k} = '${data[k]}, `;
+                set += `${k} = '${data[k]}', `;
             }
             else{
                 set += `${k} = ${data[k]}, `;
             }
         }
         set = set.substring(0, set.length - 2);
+
+        console.log(set);
 
         this.conn.query(
             `UPDATE characters

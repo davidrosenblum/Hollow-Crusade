@@ -29,6 +29,10 @@ let GameController = class GameController extends dark.EventEmitter{
         dark.stage.addChild(this.background);
         dark.stage.addChild(this.scene);
         dark.stage.addChild(this.foreground);
+
+
+        dark.TextField.DEFAULT_FONT = "18px arial";
+        dark.GameObject.NAMETAG_FONT = "16px arial";
     }
 
     loadMap(id){
@@ -40,6 +44,9 @@ let GameController = class GameController extends dark.EventEmitter{
         if(this.mapLoaded){
             this.unloadMap();
         }
+
+        dark.init("#canvas-container", this.CANVAS_WIDTH, this.CANVAS_HEIGHT, this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
+        dark.stage.fullscreenMode();
 
         dark.MapBuilder.buildGrid(
             mapData.background,
@@ -81,9 +88,6 @@ let GameController = class GameController extends dark.EventEmitter{
                 this.collidables.push(child);
             }
         });
-
-        dark.init("#canvas-container", this.CANVAS_WIDTH, this.CANVAS_HEIGHT, this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
-        dark.stage.fullscreenMode();
         
         this.scene.depthSort();
 
@@ -111,6 +115,11 @@ let GameController = class GameController extends dark.EventEmitter{
 
         dark.kill();
         this.mapLoaded = false;
+    }
+
+    handleSelectTarget(evt){
+        let target = evt.target;
+        RequestSender.objectStats(target.objectID || -1);
     }
 
     // converts 'my-object-type' to 'MyObjectType'
@@ -158,6 +167,8 @@ let GameController = class GameController extends dark.EventEmitter{
             if(this.objectManager.addObject(object)){
                 this.scene.addChild(object);
                 this.scene.depthSort();
+
+                object.on(dark.Event.CLICK, this.handleSelectTarget);
             }
         }
     }

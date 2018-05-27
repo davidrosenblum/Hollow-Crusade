@@ -39,7 +39,7 @@ let UIController = class UIController extends dark.EventEmitter{
     }
 
     hudTarget(data){
-
+        this.emit({type: "hud-target", data: data});
     }
 
     hudSelf(data){

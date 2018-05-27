@@ -36,7 +36,8 @@ const OPC_AUTH = 1,
     OPC_OBJECT_CREATE = 11,
     OPC_OBJECT_DELETE = 12,
     OPC_OBJECT_UPDATE = 13,
-    OPC_FX_SPAWN = 14,
+    OPC_OBJECT_STATS =  14,
+    OPC_FX_SPAWN = 15,
     BATTLE_NODE_CREATE = 16,
     BATTLE_NODE_DELETE = 17,
     BATTLE_NODE_UPDATE = 18,
@@ -145,6 +146,9 @@ let processSocketData = function(socket, opc, data){
     }
     else if(opc === OPC_CHAT_MESSAGE){
         processChat(socket, data.chat || "");
+    }
+    else if(opc === OPC_OBJECT_STATS){
+        processObjectStats(socket, data.objectID || -1);
     }
 };
 
@@ -272,10 +276,7 @@ let processCharacterSelect = function(socket, name){
             send(OPC_CHARACTER_SELECT, "Unable to load character.", STATUS_BAD);
         }
         else{
-            socket.player = new Player(rows[0]);
-            socket.player.teamID = TEAM_ID_PLAYERS;
-            socket.player.ownerID = socket.socketID;
-
+            createPlayer(socket, rows[0]);
             rooms[DEFAULT_ROOM].addSocket(socket);
         }
     });
@@ -302,6 +303,22 @@ let processChat = function(socket, chat){
     }
 };
 
+let processObjectStats = function(socket, objectID){
+    if(socket.room){
+        let object = socket.room.getObject(objectID);
+        
+        if(object){
+            send(socket, OPC_OBJECT_STATS, object.getStats(), STATUS_GOOD);
+        }
+        else{
+            send(socket, OPC_OBJECT_STATS, "Object not found.", STATUS_BAD);
+        }
+    }
+    else{
+        send(socket, OPC_OBJECT_STATS, "You are not in a room.", STATUS_BAD);
+    }
+};
+
 let processAdminCommand = function(socket, chat){
     if(socket.accessLevel < 2){
         sendChat(socket, "You do not have admin command privilege.");
@@ -312,24 +329,26 @@ let processAdminCommand = function(socket, chat){
         command = values.shift();
 
     if(command === "add"){
-        let attr = values[1] || "";
+        let attr = values[0] || "",
+            val = parseInt(values[1]) || 0;
+
         if(attr === "health"){
-            socket.player.addHealth(parseInt(values[2]) || 0);
+            socket.player.addHealth(val|| 0);
         }
         else if(attr === "mana"){
-            socket.player.addMana(parseInt(values[2]) || 0);
+            socket.player.addMana(val || 0);
         }
         else if(attr === "xp"){
-            socket.player.addXP(parseInt(values[2] || 0));
+            socket.player.addXP(val || 0);
         }
         else if(attr === "money"){
-            socket.player.addMoney(parseInt(values[2] || 0));
+            socket.player.addMoney(val || 0);
         }
         else if(attr === "tokens"){
-            socket.player.addTokens(parseInt(values[2] || 0));
+            socket.player.addTokens(val || 0);
         }
         else{
-            sendChat(socket, `Cannot ADD '${values[1]}`);
+            sendChat(socket, `Cannot ADD '${values[1]}'`);
         }
     }
     else if(command === "set"){
@@ -337,13 +356,13 @@ let processAdminCommand = function(socket, chat){
         sendChat(socket, `Cannot SET '${values[1]}'.`);
     }
     else if(command === "kill"){
-        room.deleteObject(values[1] || 0);
+        room.deleteObject(values[0] || 0);
     }
     else if(command === "kick"){
-        kickPlayer(room, values[1] || "");
+        kickPlayer(room, values[0] || "");
     }
     else if(command === "broadcast"){
-        broadcastChat(values[1]);
+        broadcastChat(values[0]);
     }
     else{
         sendChat(socket, `${command} is an invalid command.`);
@@ -440,7 +459,30 @@ let handleRoomUpdateObject = function(evt){
             socket.send(message, sock.udpPort);
         }
     });
-}
+};
+
+let createPlayer = function(socket, saveData){
+    socket.player = new Player(saveData);
+    socket.player.teamID = TEAM_ID_PLAYERS;
+    socket.player.ownerID = socket.socketID;
+
+    socket.player.on(GameEvent.PLAYER_MONEY, evt => {
+        sendChat(socket, `You earned ${evt.value} money.`);
+        database.updateCharacter(socket.player.getSaveData());
+    });
+
+    socket.player.on(GameEvent.PLAYER_XP, evt => {
+        sendChat(socket, `You earned ${evt.value} XP.`);
+        database.updateCharacter(socket.player.getSaveData());
+    });
+
+    socket.player.on(GameEvent.PLAYER_LEVEL_UP, evt => {
+        socket.player.fillHealth();
+        socket.player.fillMana();
+        sendChat(socket, `You reached level ${evt.value}!`);
+        database.updateCharacter(socket.player.getSaveData());
+    });
+};
 
 let createRooms = function(){
     rooms = {

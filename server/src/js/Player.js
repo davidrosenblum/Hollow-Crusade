@@ -5,7 +5,10 @@ let Player = class Player extends GameCombatObject{
     constructor(saveData){
         super({
             name: saveData.name,
-            type: "player"
+            type: "player",
+            moveSpeed: 2,
+            health: 15,
+            mana: 25
         });
 
         this.xp = 0;
@@ -28,11 +31,12 @@ let Player = class Player extends GameCombatObject{
     }
 
     restoreLevel(level){
-        let lvls = level - 1;
-
-        for(let i = 0; i < lvls; i++){
+        for(let i = 1; i < level; i++){
             this.levelUp(false);
         }
+
+        this.fillHealth();
+        this.fillMana();
     }
 
     levelUp(emit=true){
@@ -44,7 +48,8 @@ let Player = class Player extends GameCombatObject{
             this.xpNeeded *= 1.08;
             
             this.points++;
-            this.healthCap++;
+
+            this.healthCap += (this.level % 10);
 
             if(this.level % 2 === 0){
                 this.manaCap++;
@@ -54,9 +59,23 @@ let Player = class Player extends GameCombatObject{
                 this.emit(new GameEvent(GameEvent.PLAYER_LEVEL_UP, null, this.level));
             }
         }
+
+        if(this.level === Player.LEVEL_CAP){
+            this.manaCap++;
+        }
+    }
+
+    fillHealth(){
+        this.health = this.healthCap;
+    }
+
+    fillMana(){
+        this.mana = this.manaCap;
     }
 
     addXP(xp){
+        this.emit(new GameEvent(GameEvent.PLAYER_XP, null, xp));
+
         let xpRemaining = xp;
         
         while(this.xpToGo <= xpRemaining){
@@ -65,8 +84,6 @@ let Player = class Player extends GameCombatObject{
         }
 
         this.xp += xpRemaining;
-
-        this.emit(new GameEvent(GameEvent.PLAYER_XP, null, xp));
     }
 
     addMoney(amount){
@@ -166,10 +183,37 @@ let Player = class Player extends GameCombatObject{
         return this.xpNeeded - this.xp;
     }
 
+    getSaveData(){
+        return {
+            name: this.name,
+            level: this.level,
+            xp: this.xp,
+            money: this.money,
+            points: this.points,
+            tokens: this.tokens,
+            skin_id: this.skinID
+        }
+    }
+
     getSpawnData(){
         let data = super.getSpawnData();
         data.skinID = this.skinID;
         return data;
+    }
+
+    getStats(){
+        let stats = super.getStats();
+        stats.level = this.level;
+        stats.xp = this.xp;
+        stats.xpNeeded = this.xpNeeded;
+        stats.money = this.money;
+        stats.points = this.points;
+        stats.tokens = this.tokens;
+        stats.spiritLevel = this.spiritLevel;
+        stats.afflictionLevel = this.afflictionLevel;
+        stats.destructionLevel = this.destructionLevel;
+        stats.weaponLevel = this.weaponLevel;
+        return stats;
     }
 };
 
