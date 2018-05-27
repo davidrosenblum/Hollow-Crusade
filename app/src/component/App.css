@@ -1,11 +1,12 @@
-.app-container{
-
+body{
+    background-color: green;
 }
 
 .app-menu{
+    background-image: linear-gradient(180deg, white, silver);
     padding: 10px;
     margin: 10px;
-    border: 1px solid gray;
+    border: 1px solid black;
     border-radius: 5px;
     text-align: center;
 }
@@ -25,7 +26,7 @@
 }
 
 .action-input{
-    border: 1px solid gray;
+    border: 1px solid black;
     border-radius: 3px;
     background-color: white;
     width: 250px;
@@ -34,4 +35,9 @@
 
 .centered{
     text-align: center;
+}
+
+::selection{
+    background-color: black;
+    color: white;
 }

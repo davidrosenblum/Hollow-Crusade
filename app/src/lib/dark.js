@@ -101,30 +101,33 @@ let dark = (function(){
 
             this._drawXCache = x;
             this._drawYCache = y;
-            this._rightCache = x + width;
-            this._bottomCache = y + height;
-            this._centerXCache = x + width / 2;
-            this._centerYCache = y + height  / 2;
+            this._drawRightCache = x + width;
+            this._drawHeightCache = y + height;
 
             this.visible = true;
-            this.hitbox = null;
             this.showHitbox = false;
 
+            this._hitbox = null;
             this._id = ++lastDisplayObjectID;
             this._parent = null;
         }
 
-        hitboxCollision(target){
+        hitboxCollision(target, forceIgnoreHitbox=false){
             if(target instanceof DisplayObject === false){
                 throw new Error("Argument must be of type DisplayObject.");
                 return;
             }
 
-            let hb1 = this.getHitbox(),
-                hb2 = target.getHitbox();
+            let hb1 = this.hitbox,
+                hb2 = target.hitbox;
 
-            if(hb1.y < hb2.bottom && hb2.y < hb1.bottom){
-                if(hb1.x < hb2.right && hb2.x < hb1.right){
+            if(forceIgnoreHitbox){
+                hb1 = this;
+                hb2 = target;
+            }
+
+            if(hb1.drawY < hb2.drawBottom && hb2.drawY < hb1.drawBottom){
+                if(hb1.drawX < hb2.drawRight && hb2.drawX < hb1.drawRight){
                     return true;
                 }
             }
@@ -151,7 +154,7 @@ let dark = (function(){
         }
 
         drawHitbox(){
-            CTX.strokeRect(this.drawX, this.drawY, this.getHitbox().width, this.getHitbox().height);
+            CTX.strokeRect(this.hitbox.drawX, this.hitbox.drawY, this.hitbox.width, this.hitbox.height);
         }
 
         remove(){
@@ -161,17 +164,29 @@ let dark = (function(){
             return false;
         }
 
+        center(){
+            if(this._parent){
+                this.x = (this._parent.width - this.width) / 2;
+                this.y = (this._parent.height - this.height) / 2;
+            }
+        }
+
+        centerTD(){
+            if(this._parent){
+                this.x = (this._parent.width - this.width) / 2;
+                this.y = this._parent.height - this.height;
+            } 
+        }
+
         setPosition(x, y){
             this._x = x;
             this._y = y;
 
-            this.updateBottomCache();
-            this.updateRightCache();
-            this.updateCenterXCache();
-            this.updateCenterYCache();
             this.updateDrawXCache();
             this.updateDrawYCache();
-
+            this.updateDrawRightCache();
+            this.updateDrawBottomCache();
+            
             this.emit(new Event(Event.MOVE));
         }
 
@@ -179,32 +194,10 @@ let dark = (function(){
             this._width = width;
             this._height = height;
 
-            this.updateBottomCache();
-            this.updateRightCache();
-            this.updateCenterXCache();
-            this.updateCenterYCache();
+            this.updateDrawRightCache();
+            this.updateDrawBottomCache();
 
             this.emit(new Event(Event.RESIZE));
-        }
-
-        getHitbox(){
-            return (this.hitbox) ? this.hitbox : this;
-        }
-
-        updateRightCache(){
-            this._rightCache = this._x + this._width;
-        }
-
-        updateBottomCache(){
-            this._bottomCache = this._y + this._height;
-        }
-
-        updateCenterXCache(){
-            this._centerXCache = this._x + this._width / 2;
-        }
-
-        updateCenterYCache(){
-            this._centerYCache = this._y + this.height / 2;
         }
 
         updateDrawXCache(){
@@ -231,8 +224,6 @@ let dark = (function(){
             this._x = x;
 
             this.updateDrawXCache();
-            this.updateRightCache();
-            this.updateCenterXCache();
 
             this.emit(new Event(Event.MOVE));   
         }
@@ -241,8 +232,6 @@ let dark = (function(){
             this._y = y;
 
             this.updateDrawYCache();
-            this.updateBottomCache();
-            this.updateCenterYCache();
 
             this.emit(new Event(Event.MOVE));
         }
@@ -250,8 +239,11 @@ let dark = (function(){
         set width(width){
             this._width = width;
 
-            this.updateRightCache();
-            this.updateCenterXCache();
+            this.updateDrawRightCache();
+
+            if(this.hitbox !== this){
+                this.hitbox.centerTD();
+            }
 
             this.emit(new Event(Event.RESIZE));
         }
@@ -259,26 +251,17 @@ let dark = (function(){
         set height(height){
             this._height = height;
 
-            this.updateBottomCache();
-            this.updateCenterYCache();
+            this.updateDrawBottomCache();
+
+            if(this.hitbox !== this){
+                this.hitbox.centerTD();
+            }
 
             this.emit(new Event(Event.RESIZE));
         }
 
-        get right(){
-            return this._rightCache;
-        }
-
-        get bottom(){
-            return this._bottomCache;
-        }
-
-        get centerX(){
-            return this._centerXCache;
-        }
-
-        get centerY(){
-            return this._centerYCache;
+        get hitbox(){
+            return this;
         }
 
         get x(){
@@ -297,12 +280,44 @@ let dark = (function(){
             return this._height;
         }
 
+        get right(){
+            return this.x + this.width;
+        }
+
+        get bottom(){
+            return this.y + this.height;
+        }
+
+        get centerX(){
+            return this.x + this.width / 2;
+        }
+
+        get centerY(){
+            return this.y + this.height / 2;
+        }
+
         get drawX(){
             return this._drawXCache;
         }
 
         get drawY(){
             return this._drawYCache;
+        }
+
+        get drawRight(){
+            return this.drawX + this.width;
+        }
+
+        get drawBottom(){
+            return this.drawY + this.height;
+        }
+
+        get drawCenterX(){
+            return this.drawX + this.drawWidth / 2;
+        }
+
+        get drawCenterY(){
+            return this.drawY + this.drawHeight / 2;
         }
 
         get parent(){
@@ -451,6 +466,43 @@ let dark = (function(){
             }
         }
 
+        swapChildrenAt(index1, index2){
+            let a = this.getChildAt(index1),
+                b = this.getChildAt(index2);
+
+            if(a && b){
+                this._drawList[index1] = b;
+                this._drawList[index2] = a;
+                return true;
+            }
+            return false;
+        }
+
+        swapChildren(a, b){
+            let index1 = -1,
+                index2 = -1;
+
+            for(let i = 0; i < this.numChildren; i++){
+                if(this.getChildAt(i) === a){
+                    index1 = i;
+                }
+                else if(this.getChildAt(i) === b){
+                    index2 = i;
+                }
+
+                if(index1 > -1 && index2 > -1){
+                    break;
+                }
+            }
+
+            if(index1 > -1 && index2 > -1){
+                this._drawList[index1] = b;
+                this._drawList[index2] = a;
+                return true;
+            }
+            return false;
+        }
+
         depthSort(){
             for(let i = 0, a; i < this.numChildren; i++){
                 a = this.getChildAt(i);
@@ -465,6 +517,24 @@ let dark = (function(){
                     }
                 }
             }
+        }
+
+        setHitbox(width, height){
+            this.removeHitbox();
+            this._hitbox = new DisplayObject(0, 0, width, height);
+            this.addChild(this._hitbox);
+            this._hitbox.centerTD();
+        }
+
+        removeHitbox(){
+            if(this._hitbox){
+                this.removeChild(this._hitbox);
+            }
+            this._hitbox = null;
+        }
+
+        get hitbox(){
+            return this._hitbox ? this._hitbox : this;
         }
 
         updateDrawXCache(){
@@ -899,6 +969,14 @@ let dark = (function(){
             this._scroll.y += distance;
             this.update();
         }
+
+        get offsetX(){
+            return this._scroll.x;
+        }
+
+        get offsetY(){
+            return this._scroll.y;
+        }
     };
 
     let RNG = class RNG{
@@ -939,6 +1017,29 @@ let dark = (function(){
             return null;
         }
 
+        getCoords(target){
+            return {
+                x: (target.hitbox !== target) ? Math.floor((target.x + target.hitbox.centerX) / this._cellSize) : Math.floor(target.centerX / this._cellSize),
+                y: (target.hitbox !== target) ? Math.floor((target.y + target.hitbox.centerY) / this._cellSize) : Math.floor(target.centerY / this._cellSize)
+            };
+        }
+
+        getSurrounding(target){
+            let coords = this.getCoords(target);
+
+            return {
+                topLeft:        this.retrieveAt(coords.x-1, coords.y-1),
+                topCenter:      this.retrieveAt(coords.x, coords.y-1),
+                topRight:       this.retrieveAt(coords.x+1, coords.y-1),
+                centerLeft:     this.retrieveAt(coords.x-1, coords.y),
+                center:         this.retrieveAt(coords.x, coords.y),
+                centerRight:    this.retrieveAt(coords.x+1, coords.y),
+                bottomLeft:     this.retrieveAt(coords.x-1, coords.y+1),
+                bottomCenter:   this.retrieveAt(coords.x, coords.y+1),
+                bottomRight:    this.retrieveAt(coords.x+1, coords.y+1),
+            };
+        }
+
         collisionAbove(target){
             if(target instanceof DisplayObject){
                 let x = Math.round(target.x / this._cellSize),
@@ -973,6 +1074,10 @@ let dark = (function(){
 
                 return this.retrieveAt(x, y) || null;
             }
+
+            let surrounding = this.getSurrounding(target);
+            if(surrounding.center) return surrounding.center;
+            else if(surrounding.bottomRight) return surrounding.bottomRight;
         }
 
         convertPixelsToCoords(px, py){
@@ -1217,7 +1322,7 @@ let dark = (function(){
             this.canvas = document.createElement("canvas");
             this.context = this.canvas.getContext("2d");
 
-            this.keyHandler = new KeyHandler(this.canvas);
+            this.canvas.setAttribute("dark-canvas", "true");
 
             this.resize(width, height);
             this.resizeDisplay(width, height);
@@ -1226,14 +1331,14 @@ let dark = (function(){
                 let mouse = new DisplayObject(evt.clientX, evt.clientY, 3, 3);
 
                 stage.forAllChildren(child => {
-                    if(mouse.hitboxCollision(child)){
+                    if(mouse.hitboxCollision(child, true)){
                         child.emit(new Event(Event.CLICK));
                     }
                 });
             });
         }
 
-        handleWindowResize(evt){
+        fullscreenResize(evt){
             if(window.innerWidth > window.innerHeight){
                 this.canvas.style.width = window.innerWidth + "px";
                 this.canvas.style.height = window.innerWidth * (this.canvas.height / this.canvas.width) + "px";
@@ -1245,8 +1350,13 @@ let dark = (function(){
         }
 
         fullscreenMode(){
-            window.addEventListener("resize", this.handleWindowResize.bind(this));
-            this.handleWindowResize();
+            window.addEventListener("resize", this.fullscreenResize.bind(this));
+            
+            this.canvas.style.position = "absolute";
+            this.canvas.style.left = "0px";
+            this.canvas.style.top = "0px";
+
+            this.fullscreenResize();
         }
 
         draw(){
@@ -1267,6 +1377,28 @@ let dark = (function(){
         resize(width, height){
             this.canvas.width = width;
             this.canvas.height = height;
+        }
+
+        set showHitboxes(bool){
+            this.forAllChildren(child => {
+                child.showHitbox = bool;
+            });
+        }
+
+        get stageWidth(){
+            return this.canvas.width;
+        }
+
+        get stageHeight(){
+            return this.canvas.height;
+        }
+
+        get canvasWidth(){
+            return this.canvas.style.width || this.canvas.width;
+        }
+
+        get canvasHeight(){
+            return this.canvas.style.height || this.canvas.height;
         }
     };
 
@@ -1472,14 +1604,18 @@ let dark = (function(){
         }
     };
 
-    let init = function(element, width=550, height=400){
+    let init = function(element, drawWidth=550, drawHeight=400, canvasWidth=550, canvasHeight=400){
         if(initialized){
             return false;
         }
 
+        if(typeof element === "string"){
+            element = document.querySelector(element);
+        }
         element = (!element || (element instanceof window.Element === false)) ? document.body : element;
 
-        stage.resize(width, height);
+        stage.resize(drawWidth, drawHeight);
+        stage.resizeDisplay(canvasWidth, canvasHeight);
 
         element.appendChild(stage.canvas);
 

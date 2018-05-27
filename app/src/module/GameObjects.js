@@ -1,16 +1,19 @@
 import dark from '../lib/dark';
+import GameController from './GameController';
 
 const GameObjects = {
     Player: class Player extends dark.GameObject{
         constructor(x, y){
-            super("", x, y, 50, 50);
+            super("player1", x, y, GameController.CELL_SIZE * 0.75, GameController.CELL_SIZE);
+
+            this.setHitbox(this.width, this.height * 0.25);
         }
     },
 
     SKINS: [
-        "player1.png",
-        "player2.png",
-        "player3.png"
+        "player1",
+        "player2",
+        "player3"
     ],
 
     getSkin: function(id){

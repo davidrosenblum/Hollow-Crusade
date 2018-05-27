@@ -1,5 +1,6 @@
 import UIController from './UIController';
 import GameController from './GameController';
+import AssetPreloader from './AssetPreloader';
 import { OPC, Status } from './Comm';
 import dark from '../lib/dark';
 
@@ -17,6 +18,8 @@ let Client = class Client{
         this.game = null;
 
         this.VERSION = "0.1.0";
+
+        AssetPreloader.preloadAssets();
     }
 
     connect(){

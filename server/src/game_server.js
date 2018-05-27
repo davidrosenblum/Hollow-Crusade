@@ -134,7 +134,7 @@ let processSocketData = function(socket, opc, data){
         processRoomChange(socket, data.roomName);
     }
     else if(opc === OPC_CHAT_MESSAGE){
-        
+        processChat(socket, data.chat || "");
     }
 };
 
@@ -276,6 +276,74 @@ let processRoomChange = function(socket, roomName){
     room.addSocket(socket);
 };
 
+let processChat = function(socket, chat){
+    if(socket.room){
+        if(chat.charAt(0) === "~"){
+            processAdminCommand(socket, chat.substr(1));
+        }
+        else{
+            sendRoomChat(socket.room, chat, socket.player.name);
+        }
+    }
+};
+
+let processAdminCommand = function(socket, chat){
+    if(socket.accessLevel < 2){
+        sendChat(socket, "You do not have admin command privilege.");
+    }
+
+    let values = chat.split(" "),
+        command = values.shift();
+
+    if(command === "add"){
+        let attr = values[1] || "";
+        if(attr === "health"){
+            socket.player.addHealth(parseInt(values[2]) || 0);
+        }
+        else if(attr === "mana"){
+            socket.player.addMana(parseInt(values[2]) || 0);
+        }
+        else if(attr === "xp"){
+            socket.player.addXP(parseInt(values[2] || 0));
+        }
+        else if(attr === "money"){
+            socket.player.addMoney(parseInt(values[2] || 0));
+        }
+        else if(attr === "tokens"){
+            socket.player.addTokens(parseInt(values[2] || 0));
+        }
+        else{
+            sendChat(socket, `Cannot ADD '${values[1]}`);
+        }
+    }
+    else if(command === "set"){
+        // not implemented
+        sendChat(socket, `Cannot SET '${values[1]}'.`);
+    }
+    else if(command === "kill"){
+        room.deleteObject(values[1] || 0);
+    }
+    else if(command === "kick"){
+        kickPlayer(room, values[1] || "");
+    }
+    else if(command === "broadcast"){
+        broadcastChat(values[1]);
+    }
+    else{
+        sendChat(socket, `${command} is an invalid command.`);
+    }
+};
+
+let sendChat = function(socket, chat, sender=null){
+    send(socket, OPC_CHAT_MESSAGE, {chat: chat, sender: sender});
+};
+
+let sendRoomChat = function(room, chat, sender=null){
+    room.forEachSocket(socket => {
+        sendChat(socket, chat, sender);
+    });
+};
+
 let send = function(socket, opc, data, status=STATUS_GOOD){
     let message = {
         opc: opc,
@@ -284,6 +352,19 @@ let send = function(socket, opc, data, status=STATUS_GOOD){
     };
 
     socket.write(JSON.stringify(message) + MSG_DELIM);
+};
+
+let broadcastChat = function(chat){
+    for(let k in rooms){
+        sendRoomChat(rooms[k], chat, "[SERVER]");
+    }
+};
+
+let kickPlayer = function(room, name){
+    let target = room.getPlayer(name);
+    if(target){
+        room.removeSocket(sockets[target.ownerID]);
+    }
 };
 
 let handleRoomAddSocket = function(evt){

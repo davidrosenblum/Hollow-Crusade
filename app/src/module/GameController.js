@@ -2,6 +2,7 @@ import dark from '../lib/dark';
 import MapData from './MapData';
 import GameObjects from './GameObjects';
 import Client from './Client';
+import RequestSender from './RequestSender';
 
 let GameController = class GameController extends dark.EventEmitter{
     constructor(){
@@ -13,7 +14,7 @@ let GameController = class GameController extends dark.EventEmitter{
         this.keyHandler = new dark.KeyHandler(document.body);
         this.objectManager = new dark.ObjectManager();
 
-        this.collisionGrid = null;
+        this.collidables = null;
         this.mapBounds = null;
         this.scroller = null;
 
@@ -22,6 +23,12 @@ let GameController = class GameController extends dark.EventEmitter{
         this.mapLoaded = false;
 
         this.CELL_SIZE = 96;
+        this.CANVAS_WIDTH = 1280;
+        this.CANVAS_HEIGHT = 720;
+
+        dark.stage.addChild(this.background);
+        dark.stage.addChild(this.scene);
+        dark.stage.addChild(this.foreground);
     }
 
     loadMap(id){
@@ -43,7 +50,7 @@ let GameController = class GameController extends dark.EventEmitter{
         
         );
 
-        this.collisionGrid = dark.MapBuilder.buildGrid(
+        dark.MapBuilder.buildGrid(
             mapData.scene,
             mapData.sceneTypes,
             this.CELL_SIZE,
@@ -68,7 +75,24 @@ let GameController = class GameController extends dark.EventEmitter{
 
         this.scroller = new dark.Scroller([this.background, this.scene, this.foreground], this.mapBounds);
 
+        this.collidables = [];
+        this.scene.forEachChild(child => {
+            if(child instanceof dark.GameObject === false){
+                this.collidables.push(child);
+            }
+        });
+
+        dark.init("#canvas-container", this.CANVAS_WIDTH, this.CANVAS_HEIGHT, this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
+        dark.stage.fullscreenMode();
+        
+        this.scene.depthSort();
+
         this.mapLoaded = true;
+
+        /* remove this later... */
+        window.dark = dark;
+        window.GameController = this;
+        //dark.stage.showHitboxes = true;
     }
 
     unloadMap(){
@@ -80,11 +104,12 @@ let GameController = class GameController extends dark.EventEmitter{
         this.scene.removeChildren();
         this.foreground.removeChildren();
 
-        this.collisionGrid = null;
+        this.collidables = null;
         this.mapBounds = null;
         this.scroller = null;
         this.objectManager.clearObjects();
 
+        dark.kill();
         this.mapLoaded = false;
     }
 
@@ -152,28 +177,42 @@ let GameController = class GameController extends dark.EventEmitter{
     updatePlayerMovement(evt){
         if(this.keyHandler.numKeys > 0){
             if(this.keyHandler.isKeyDown(87)){
-                this.player.moveUp(this.collisionGrid, this.mapBounds, this.scroller);
+                this.player.moveUp(this.collidables, this.mapBounds, this.scroller);
+                this.playerUpdated();
             }
             else if(this.keyHandler.isKeyDown(83)){
-                this.player.moveDown(this.collisionGrid, this.mapBounds, this.scroller);
+                this.player.moveDown(this.collidables, this.mapBounds, this.scroller);
+                this.playerUpdated();
             }
 
             if(this.keyHandler.isKeyDown(65)){
-                this.player.moveLeft(this.collisionGrid, this.mapBounds, this.scroller);
+                this.player.moveLeft(this.collidables, this.mapBounds, this.scroller);
+                this.playerUpdated();
             }
             else if(this.keyHandler.isKeyDown(68)){
-                this.player.moveRight(this.collisionGrid, this.mapBounds, this.scroller);
+                this.player.moveRight(this.collidables, this.mapBounds, this.scroller);
+                this.playerUpdated();
             }
         }
     }
 
+    playerUpdated(){
+        RequestSender.objectUpdate(this.player.getData());
+        this.scene.depthSort();
+    }
+
     setPlayer(object){
-        if(this.player){
-            this.removeListener(dark.Event.DRAW, this.updatePlayerMovement.bind(this));
-        }
+        this.releasePlayer();
 
         this.player = object;
-        this.on(dark.Event.DRAW, this.updatePlayerMovement.bind(this));
+        dark.stage.on(dark.Event.DRAW, this.updatePlayerMovement.bind(this));
+    }
+
+    releasePlayer(){
+        if(this.player){
+            dark.stage.removeListener(dark.Event.DRAW, this.updatePlayerMovement.bind(this));
+            this.player = null;
+        }
     }
 };
 
