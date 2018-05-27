@@ -2,6 +2,10 @@ import React from 'react';
 import UIController from '../module/UIController';
 import RequestSender from '../module/RequestSender';
 
+import playerSkin1 from '../img/player1.png';
+import playerSkin2 from '../img/player2.png';
+import playerSkin3 from '../img/player3.png';
+
 import './CharacterCreate.css';
 
 class CharacterCreate extends React.Component{
@@ -12,9 +16,9 @@ class CharacterCreate extends React.Component{
             name: "",
             currIndex: 0,
             skins: [
-                {image: null},
-                {image: null},
-                {image: null}
+                playerSkin1,
+                playerSkin2,
+                playerSkin3
             ]
         };
     }
@@ -68,7 +72,7 @@ class CharacterCreate extends React.Component{
                 </div>
                 <br/>
                 <div>
-                    <img src={this.currSkin.image} alt={`Skin-${this.state.currIndex}`} height="200px"/>
+                    <img src={this.currSkin} alt={`Skin-${this.state.currIndex}`} height="200px"/>
                 </div>
                 <br/>
                 <div>

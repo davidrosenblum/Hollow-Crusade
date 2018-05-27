@@ -3,6 +3,8 @@ import Loading from './Loading.jsx';
 import Login from './Login.jsx'
 import CharacterSelect from './CharacterSelect.jsx';
 import CharacterCreate from './CharacterCreate.jsx';
+import Game from './Game';
+
 import Modal from './Modal.jsx';
 import Client from '../module/Client';
 import UIController from '../module/UIController';
@@ -70,6 +72,7 @@ class App extends React.Component{
                 <Login currMenu={this.state.currMenu} />
                 <CharacterSelect currMenu={this.state.currMenu} characterList={this.state.characterList} characterListLoading={this.state.characterListLoading} />
                 <CharacterCreate currMenu={this.state.currMenu} />
+                <Game currMenu={this.state.currMenu} />
                 <Modal message={this.state.modalMessage}/>
             </div>
         );

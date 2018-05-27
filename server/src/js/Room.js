@@ -71,6 +71,19 @@ let Room = class Room extends EventEmitter{
             fn(this.objects[id]);
         }
     }
+
+    getObject(id){
+        return this.objects[id] || null;
+    }
+
+    getPlayer(name){
+        this.forEachObject(obj => {
+            if(obj.type === "player" && obj.name === name){
+                return obj;
+            }
+        });
+        return null;
+    }
 };
 
 module.exports = Room;

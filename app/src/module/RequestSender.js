@@ -40,6 +40,10 @@ let RequestSender = class RequestSender{
         Client.send(OPC.CHAT_MESSAGE, {chat: chat});
     }
 
+    static objectUpdate(data){
+        // udp...
+    }
+
     static objectStats(id){
         Client.send(OPC.OBJECT_STATS, {objectID: id});
     }
