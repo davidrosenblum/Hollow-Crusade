@@ -3,8 +3,7 @@ import Loading from './Loading.jsx';
 import Login from './Login.jsx'
 import CharacterSelect from './CharacterSelect.jsx';
 import CharacterCreate from './CharacterCreate.jsx';
-import Game from './Game';
-
+import Game from './Game.jsx';
 import Modal from './Modal.jsx';
 import Client from '../module/Client';
 import UIController from '../module/UIController';
