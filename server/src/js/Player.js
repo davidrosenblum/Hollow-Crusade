@@ -195,11 +195,17 @@ let Player = class Player extends GameCombatObject{
     }
 
     applySkin(id, emit=true){
+        // find new skin data
+        let newSkin = PlayerSkins.getSkin(id);
+        if(!newSkin){
+            throw new Error(`Skin ${id} does not exist.`);
+        }
+
         if(this.skinID !== id){
-            // remove current skin
+            // remove current skin bonuses (only if changing!)
             let currSkin = PlayerSkins.getSkin(this.skinID);
             if(!currSkin){
-                throw new Error(`Skin ${this.skinID} not found in PlayerSkins.`);
+                throw new Error(`Skin ${this.skinID} does not exist.`);
             }
 
             this.healthCap -= currSkin.health;
@@ -213,12 +219,7 @@ let Player = class Player extends GameCombatObject{
             this.criticalMultiplier -= currSkin.critical_mult / 100;
         }
         
-
-        let newSkin = PlayerSkins.getSkin(id);
-        if(!newSkin){
-            throw new Error(`Skin ${id} not found in PlayerSkins.`);
-        }
-
+        // apply new skin bonuses
         this.healthCap += newSkin.health;
         this.manaCap += newSkin.mana;
         this.defense.physical += newSkin.defense_physical / 100;
@@ -229,6 +230,7 @@ let Player = class Player extends GameCombatObject{
         this.criticalModifier += newSkin.critical_chance / 100;
         this.criticalMultiplier += newSkin.critical_mult / 100;
 
+        // set new skin
         this.skinID = id;
         this.fillHealth();
         this.fillMana();

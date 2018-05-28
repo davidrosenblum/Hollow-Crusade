@@ -154,7 +154,7 @@ let GameController = class GameController extends dark.EventEmitter{
             if(data.type === "player"){
                 // players have skins
                 if(typeof data.skinID === "number"){
-                    object.changeImage(GameObjects.getSkin(data.skinID));
+                    object.setSkin(data.skinID);
                 }
 
                 // belong to this client? 
@@ -184,6 +184,13 @@ let GameController = class GameController extends dark.EventEmitter{
 
     updateObject(data){
         this.objectManager.updateObject(data);
+    }
+
+    updatePlayerSkin(objectID, skinID){
+        let object = this.objectManager.getObject(objectID);
+        if(object && object instanceof GameObjects.Player){
+            object.setSkin(skinID);
+        }
     }
 
     updatePlayerMovement(evt){

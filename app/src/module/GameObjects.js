@@ -8,6 +8,10 @@ const GameObjects = {
 
             this.setHitbox(this.width, this.height * 0.25);
         }
+
+        setSkin(id){
+            this.changeImage(GameObjects.getSkin(id));
+        }
     },
 
     SKINS: [
