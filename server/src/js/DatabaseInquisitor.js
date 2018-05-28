@@ -163,8 +163,6 @@ let DatabaseInquisitor = class DatabaseInquisitor{
         }
         set = set.substring(0, set.length - 2);
 
-        console.log(set);
-
         this.conn.query(
             `UPDATE characters
             SET ${set}
@@ -184,6 +182,13 @@ let DatabaseInquisitor = class DatabaseInquisitor{
         )   
     }
 
+    loadSkins(callback){
+        this.conn.query(
+            "SELECT * FROM skins",
+            callback
+        );
+    }
+
     createTables(){
         this.conn.query(
             `CREATE TABLE IF NOT EXISTS accounts(
@@ -194,7 +199,104 @@ let DatabaseInquisitor = class DatabaseInquisitor{
                 status ENUM('enabled', 'disabled') NOT NULL DEFAULT 'enabled',
                 date_joined DATETIME NOT NULL DEFAULT NOW(),
                 PRIMARY KEY (account_id)
-            )`
+            )`,
+            err => {
+                if(!err){
+
+                }
+            }
+        );
+
+        this.conn.query(
+            `CREATE TABLE skins(
+                skin_id INT UNIQUE NOT NULL,
+                name VARCHAR(255) UNIQUE NOT NULL,
+                money INT NOT NULL DEFAULT 1,
+                tokens TINYINT NOT NULL DEFAULT 0,
+                health SMALLINT NOT NULL DEFAULT 0,
+                mana SMALLINT NOT NULL DEFAULT 0,
+                defense_physical TINYINT NOT NULL DEFAULT 0,
+                defense_elemental TINYINT NOT NULL DEFAULT 0,
+                resistance_physical TINYINT NOT NULL DEFAULT 0,
+                resistance_elemental TINYINT NOT NULL DEFAULT 0,
+                damage_mult SMALLINT NOT NULL DEFAULT 0, 
+                critical_chance TINYINT NOT NULL DEFAULT 0,
+                critical_mult SMALLINT NOT NULL DEFAULT 0,
+                PRIMARY KEY (skin_id)
+            )`,
+            err => {
+                if(!err){
+                    this.conn.query(
+                        `INSERT INTO skins(skin_id, name, money)
+                        VALUES(
+                            1, 'Peasant 1', 0
+                        )`
+                    );
+
+                    this.conn.query(
+                        `INSERT INTO skins(skin_id, name, money)
+                        VALUES(
+                            2, 'Peasant 2', 0
+                        )`
+                    );
+
+                    this.conn.query(
+                        `INSERT INTO skins(skin_id, name, money)
+                        VALUES(
+                            3, 'Peasant 3', 0
+                        )`
+                    );
+
+                    this.conn.query(
+                        `INSERT INTO skins(skin_id, name, money, mana, defense_physical, resistance_physical, critical_chance, critical_mult)
+                        VALUES(
+                            4, 'Hunter', 500, 5, 5, 8, 2, 10
+                        )`
+                    );
+
+                    this.conn.query(
+                        `INSERT INTO skins(skin_id, name, money, health, defense_physical, defense_elemental, resistance_physical, resistance_elemental)
+                        VALUES(
+                            5, 'Knight', 1000, 15, 8, 3, 10, 8
+                        )`
+                    );
+
+                    this.conn.query(
+                        `INSERT INTO skins(skin_id, name, money, mana, defense_physical, defense_elemental, resistance_physical, resistance_elemental, critical_chance, critical_mult, damage_mult)
+                        VALUES(
+                            6, 'Ranger', 5000, 10, 10, 10, 8, 6, 4, 15, 5
+                        )`
+                    );
+
+                    this.conn.query(
+                        `INSERT INTO skins(skin_id, name, money, health, mana, defense_physical, defense_elemental, resistance_physical, resistance_elemental)
+                        VALUES(
+                            7, 'Templar', 7000, 20, 5, 10, 5, 15, 10
+                        )`
+                    );
+
+                    this.conn.query(
+                        `INSERT INTO skins(skin_id, name, money, tokens, health, mana, defense_physical, defense_elemental, resistance_physical, resistance_elemental, critical_chance, critical_mult, damage_mult)
+                        VALUES(
+                            8, 'Phantom', 15000, 3, 15, 15, 12, 12, 15, 10, 5, 20, 10
+                        )`
+                    );
+
+                    this.conn.query(
+                        `INSERT INTO skins(skin_id, name, money, tokens, health, mana, defense_physical, defense_elemental, resistance_physical, resistance_elemental, critical_chance, critical_mult, damage_mult)
+                        VALUES(
+                            9, 'Titan', 20000, 3, 25, 10, 12, 10, 20, 15, 2, 10, 5
+                        )`
+                    );
+
+                    this.conn.query(
+                        `INSERT INTO skins(skin_id, name, money, tokens, health, mana, defense_physical, defense_elemental, resistance_physical, resistance_elemental, critical_chance, critical_mult, damage_mult)
+                        VALUES(
+                            10, 'Death Knight', 99999, 9, 35, 20, 15, 15, 25, 20, 10, 30, 20
+                        )`
+                    );
+                }
+            }
         );
 
         this.conn.query(
@@ -214,7 +316,9 @@ let DatabaseInquisitor = class DatabaseInquisitor{
                 weapon_level TINYINT NOT NULL DEFAULT 1,
                 PRIMARY KEY (character_id),
                 FOREIGN KEY (account_id) REFERENCES accounts(account_id)
-                    ON DELETE CASCADE
+                    ON DELETE CASCADE,
+                FOREIGN KEY (skin_id) REFERENCES skins(skin_id)
+                    ON DELETE RESTRICT
             )`
         );
 

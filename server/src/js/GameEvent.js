@@ -17,6 +17,7 @@ GameEvent.PLAYER_XP = "player-xp"
 GameEvent.PLAYER_LEVEL_UP = "player-level-up";
 GameEvent.PLAYER_MONEY = "player-money";
 GameEvent.PLAYER_POINTS = "player-points";
+GameEvent.PLAYER_SKIN_CHANGE = "player-skin-change";
 GameEvent.PLAYER_TOKENS = "player-tokens";
 GameEvent.PLAYER_UPGRADE = "player-upgrade";
 GameEvent.PLAYER_XP = "player-xp";
