@@ -330,7 +330,12 @@ let processAdminCommand = function(socket, chat){
 
     if(command === "add"){
         let attr = values[0] || "",
-            val = parseInt(values[1]) || 0;
+            val = parseInt(values[1]) || "";
+
+        if(!attr || !val){
+            sendChat(socket, "Expected... add <property> <value>");
+            return;
+        }
 
         if(attr === "health"){
             socket.player.addHealth(val|| 0);
@@ -348,11 +353,18 @@ let processAdminCommand = function(socket, chat){
             socket.player.addTokens(val || 0);
         }
         else{
-            sendChat(socket, `Cannot ADD '${values[1]}'`);
+            sendChat(socket, `Cannot ADD '${values[0]}'`);
         }
     }
     else if(command === "set"){
-        // not implemented
+        let attr = values[0] || null,
+            val = parseInt(values[1]) || null;
+
+        if(!attr || !val){
+            sendChat(socket, "Expected... set <property> <value>");
+            return;
+        }
+
         sendChat(socket, `Cannot SET '${values[1]}'.`);
     }
     else if(command === "kill"){
@@ -374,20 +386,29 @@ let sendChat = function(socket, chat, sender=null){
 };
 
 let sendRoomChat = function(room, chat, sender=null){
+    sendRoom(room, OPC_CHAT_MESSAGE, {chat: chat, sender: sender});
+};
+
+let sendRoom = function(room, opc, data, status=STATUS_GOOD){
+    let jsonMsg = createJSONMessage(opc, data, status);
+
     room.forEachSocket(socket => {
-        sendChat(socket, chat, sender);
+        socket.write(jsonMsg + MSG_DELIM)
     });
 };
 
 let send = function(socket, opc, data, status=STATUS_GOOD){
+    socket.write(createJSONMessage(opc, data, status) + MSG_DELIM);
+};
+
+let createJSONMessage = function(opc, data, status=STATUS_GOOD){
     let message = {
         opc: opc,
         data: (typeof data === "string") ? {message: data} : data,
         status: status
     };
-
-    socket.write(JSON.stringify(message) + MSG_DELIM);
-};
+    return JSON.stringify(message);
+}
 
 let broadcastChat = function(chat){
     for(let k in rooms){
@@ -467,20 +488,35 @@ let createPlayer = function(socket, saveData){
     socket.player.ownerID = socket.socketID;
 
     socket.player.on(GameEvent.PLAYER_MONEY, evt => {
-        sendChat(socket, `You earned ${evt.value} money.`);
+        sendChat(socket, `You gained ${evt.value} money.`);
         database.updateCharacter(socket.player.getSaveData());
+
+        processObjectStats(socket, socket.player.objectID);
+    });
+
+    socket.player.on(GameEvent.PLAYER_TOKENS, evt => {
+        sendChat(socket, `You gained ${evt.value} ${(evt.value < 2 ? "token" : "tokens")}.`);
+        database.updateCharacter(socket.player.getSaveData());
+
+        processObjectStats(socket, socket.player.objectID);
     });
 
     socket.player.on(GameEvent.PLAYER_XP, evt => {
-        sendChat(socket, `You earned ${evt.value} XP.`);
+        sendChat(socket, `You gained ${evt.value} XP.`);
         database.updateCharacter(socket.player.getSaveData());
+        
+        processObjectStats(socket, socket.player.objectID);
     });
 
     socket.player.on(GameEvent.PLAYER_LEVEL_UP, evt => {
+        sendChat(socket, `You reached level ${evt.value}!`);
+
+        database.updateCharacter(socket.player.getSaveData());
+
         socket.player.fillHealth();
         socket.player.fillMana();
-        sendChat(socket, `You reached level ${evt.value}!`);
-        database.updateCharacter(socket.player.getSaveData());
+
+        processObjectStats(socket, socket.player.objectID);
     });
 };
 

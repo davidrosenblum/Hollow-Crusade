@@ -19,7 +19,7 @@ let GameCombatObject = class GameCombatObject extends GameObject{
         this.mana = this.manaCap;
 
         this.criticalModifier = (typeof opts.criticalModifier === "number") ? opts.criticalModifier : 0;
-        this.criticalMultiplier = (typeof opts.criticalMultiplier === "number") ? opts.criticalMultiplier : 1;
+        this.criticalMultiplier = (typeof opts.criticalMultiplier === "number") ? opts.criticalMultiplier : 1.25;
         this.damageMultiplier = (typeof opts.damageMultiplier === "number") ? opts.damageMultiplier : 1;
 
         this.defense = {

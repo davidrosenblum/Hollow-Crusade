@@ -19,6 +19,7 @@ let GameController = class GameController extends dark.EventEmitter{
         this.scroller = null;
 
         this.player = null;
+        this.targetObject = null;
 
         this.mapLoaded = false;
 
@@ -26,13 +27,12 @@ let GameController = class GameController extends dark.EventEmitter{
         this.CANVAS_WIDTH = 1280;
         this.CANVAS_HEIGHT = 720;
 
+        dark.TextField.DEFAULT_FONT = "18px arial";
+        dark.GameObject.NAMETAG_FONT = "16px arial";
+
         dark.stage.addChild(this.background);
         dark.stage.addChild(this.scene);
         dark.stage.addChild(this.foreground);
-
-
-        dark.TextField.DEFAULT_FONT = "18px arial";
-        dark.GameObject.NAMETAG_FONT = "16px arial";
     }
 
     loadMap(id){
@@ -46,7 +46,6 @@ let GameController = class GameController extends dark.EventEmitter{
         }
 
         dark.init("#canvas-container", this.CANVAS_WIDTH, this.CANVAS_HEIGHT, this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
-        dark.stage.fullscreenMode();
 
         dark.MapBuilder.buildGrid(
             mapData.background,
@@ -119,6 +118,7 @@ let GameController = class GameController extends dark.EventEmitter{
 
     handleSelectTarget(evt){
         let target = evt.target;
+        this.targetObject = evt.target;
         RequestSender.objectStats(target.objectID || -1);
     }
 
@@ -161,6 +161,7 @@ let GameController = class GameController extends dark.EventEmitter{
                 if(object.ownerID === Client.socketID){
                     console.log("player found!");
                     this.setPlayer(object);
+                    RequestSender.objectStats(object.objectID);
                 }
             }
 
@@ -168,7 +169,7 @@ let GameController = class GameController extends dark.EventEmitter{
                 this.scene.addChild(object);
                 this.scene.depthSort();
 
-                object.on(dark.Event.CLICK, this.handleSelectTarget);
+                object.on(dark.Event.CLICK, this.handleSelectTarget.bind(this));
             }
         }
     }

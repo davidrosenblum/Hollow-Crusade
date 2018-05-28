@@ -43,7 +43,7 @@ let UIController = class UIController extends dark.EventEmitter{
     }
 
     hudSelf(data){
-
+        this.emit({type: "hud-self", data: data});
     }
 
     hudSpellTray(state){

@@ -885,7 +885,7 @@ let dark = (function(){
 
     let Scroller = class Scroller{
         constructor(scenes, bounds){
-            this._scroll = new Bounds(0, 0, stage.stageWidth, stage.stageHeight);
+            this._scroll = new Bounds(0, 0, stage.canvas.width, stage.canvas.height);
             this._bounds = new Bounds(bounds.x, bounds.y, bounds.width, bounds.height);
 
             this._scenes = [];
@@ -1374,11 +1374,21 @@ let dark = (function(){
             });
         }
 
-        get stageWidth(){
+        set width(width){
+            super.width = width;
+            this.canvas.width = width;
+        }
+
+        set height(height){
+            super.height = height;
+            this.canvas.height = height;
+        }
+
+        get width(){
             return this.canvas.width;
         }
 
-        get stageHeight(){
+        get height(){
             return this.canvas.height;
         }
 
