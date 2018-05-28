@@ -22,8 +22,6 @@ let Client = class Client{
         this.socketID = -1;
         this.socketUDP = null;
 
-        this.game = null;
-
         this.VERSION = "0.1.0";
 
         AssetPreloader.preloadAssets();
@@ -204,7 +202,13 @@ let Client = class Client{
 
     handleObjectStats(data, status){
         if(status === Status.GOOD){
-            UIController.hudTarget(data);
+            if(GameController.targetObject && GameController.targetObject.objectID === data.objectID){
+                UIController.hudTarget(data);
+            }
+            
+            if(GameController.player && GameController.player.objectID === data.objectID){
+                UIController.hudSelf(data);
+            }
         }
     }
 

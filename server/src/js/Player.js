@@ -55,13 +55,21 @@ let Player = class Player extends GameCombatObject{
                 this.manaCap++;
             }
 
+            this.defense.physical += 0.003;
+            this.defense.elemental += 0.002;
+
+            this.criticalModifier += 0.001;
+            this.criticalMultiplier += 0.0051;
+
             if(emit){
                 this.emit(new GameEvent(GameEvent.PLAYER_LEVEL_UP, null, this.level));
             }
         }
 
         if(this.level === Player.LEVEL_CAP){
-            this.manaCap++;
+            this.healthCap++;
+            this.xp = 1;
+            this.xpNeeded = 1;
         }
     }
 
