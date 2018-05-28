@@ -338,6 +338,11 @@ let processAdminCommand = function(socket, chat){
             return;
         }
 
+        if(val <= 0){
+            sendChat(socket, "Value must be greater than zero.");
+            return;
+        }
+
         if(attr === "health"){
             socket.player.addHealth(val|| 0);
         }
@@ -354,7 +359,7 @@ let processAdminCommand = function(socket, chat){
             socket.player.addTokens(val || 0);
         }
         else{
-            sendChat(socket, `Cannot ADD '${values[0]}'`);
+            sendChat(socket, `Cannot ADD '${attr}'`);
         }
     }
     else if(command === "set"){
@@ -393,8 +398,8 @@ let sendRoomChat = function(room, chat, sender=null){
 let sendRoom = function(room, opc, data, status=STATUS_GOOD){
     let jsonMsg = createJSONMessage(opc, data, status);
 
-    room.forEachSocket(socket => {
-        socket.write(jsonMsg + MSG_DELIM)
+    room.forEachSocket(sock => {
+        sock.write(jsonMsg + MSG_DELIM)
     });
 };
 
@@ -549,6 +554,30 @@ let connectDB = function(callback){
     });
 };
 
+let loadDatabaseTables = function(callback){
+    let checkDone = function(){
+        numDone++;
+        if(numDone === 1){
+            callback();
+        }
+    };
+
+    let numDone = 0;
+
+    database.loadSkins((err, rows) => {
+        if(err){
+            console.log(err.message);
+            process.exit();
+        }
+        else{
+            PlayerSkins.setSkins(rows);
+            console.log(" - Player skins loaded.")
+            
+            checkDone();   
+        }
+    });
+};
+
 let init = function(){
     console.log("Loading settings...");
     Settings.load((err, data) => {
@@ -579,19 +608,12 @@ let init = function(){
                 console.log("MySQL database connected.\n");
 
                 console.log("Loading database tables...")
-                database.loadSkins((err, rows) => {
-                    if(err){
-                        console.log(err.message);
-                        process.exit();
-                    }
-                    else{
-                        PlayerSkins.setSkins(rows);
-                        console.log("Database tables loaded.\n")
-                        
-                        server.listen(settings.tcp_port, () => {
-                            socket.bind(settings.udp_port);
-                        });   
-                    }
+                loadDatabaseTables(() => {
+                    console.log("Database tables loaded.\n");
+
+                    server.listen(settings.tcp_port, () => {
+                        socket.bind(settings.udp_port);
+                    });  
                 });
             }
         });
