@@ -1,5 +1,6 @@
 let GameCombatObject = require("./GameCombatObject"),
-    GameEvent = require("./GameEvent");
+    GameEvent = require("./GameEvent"),
+    PlayerSkins = require("./PlayerSkins");
 
 let Player = class Player extends GameCombatObject{
     constructor(saveData){
@@ -28,6 +29,8 @@ let Player = class Player extends GameCombatObject{
 
         this.restoreLevel(Math.max(1,saveData.level));
         this.xp += Math.max(0, saveData.xp);
+
+        this.applySkin(this.skinID, false);
     }
 
     restoreLevel(level){
@@ -185,6 +188,50 @@ let Player = class Player extends GameCombatObject{
             this.emit(new GameEvent(GameEvent.PLAYER_UPGRADE, null, stat));
         }
         return false;
+    }
+
+    applySkin(id, emit=true){
+        if(this.skinID !== id){
+            // remove current skin
+            let currSkin = PlayerSkins.getSkin(this.skinID);
+            if(!currSkin){
+                throw new Error(`Skin ${this.skinID} not found in PlayerSkins.`);
+            }
+
+            this.healthCap -= currSkin.health;
+            this.manaCap -= currSkin.mana;
+            this.defense.physical -= currSkin.defense_physical / 100;
+            this.defense.elemental -= currSkin.defense_elemental / 100;
+            this.resistance.physical -= currSkin.resistance_physical / 100;
+            this.resistance.elemental -= currSkin.resistance_elemental / 100;
+            this.damageMultiplier -= currSkin.damage_mult / 100;
+            this.criticalModifier -= currSkin.critical_chance / 100;
+            this.criticalMultiplier -= currSkin.critical_mult / 100;
+        }
+        
+
+        let newSkin = PlayerSkins.getSkin(id);
+        if(!newSkin){
+            throw new Error(`Skin ${id} not found in PlayerSkins.`);
+        }
+
+        this.healthCap += newSkin.health;
+        this.manaCap += newSkin.mana;
+        this.defense.physical += newSkin.defense_physical / 100;
+        this.defense.elemental += newSkin.defense_elemental / 100;
+        this.resistance.physical += newSkin.resistance_physical / 100;
+        this.resistance.elemental += newSkin.resistance_elemental / 100;
+        this.damageMultiplier += newSkin.damage_mult / 100;
+        this.criticalModifier += newSkin.critical_chance / 100;
+        this.criticalMultiplier += newSkin.critical_mult / 100;
+
+        this.skinID = id;
+        this.fillHealth();
+        this.fillMana();
+
+        if(emit){
+            this.emit(new GameEvent(GameEvent.PLAYER_SKIN_CHANGE, null, newSkin));
+        }
     }
 
     get xpToGo(){

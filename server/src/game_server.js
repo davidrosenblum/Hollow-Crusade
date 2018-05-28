@@ -6,6 +6,7 @@ let net = require("net"),
 let DatabaseInquisitor = require("./js/DatabaseInquisitor"),
     GameEvent = require("./js/GameEvent"),
     Player = require("./js/Player"),
+    PlayerSkins = require("./js/PlayerSkins"),
     Room = require("./js/Room"),
     Settings = require("./js/Settings"),
     UDPMessage = require("./js/UDPMessage");
@@ -83,7 +84,7 @@ let socket = dgram.createSocket("udp4", (msg, rinfo) => {
         socket.room.updateObject(data);
     }
 });
-socket.on("listening", evt => console.log(`UDP socket opened on port ${socket.address().port}.`));
+socket.on("listening", evt => console.log(`UDP socket opened on port ${socket.address().port}.\n`));
 
 
 let closeSocket = function(socket){
@@ -577,8 +578,21 @@ let init = function(){
             else{
                 console.log("MySQL database connected.\n");
 
-                server.listen(settings.tcp_port);
-                socket.bind(settings.udp_port);
+                console.log("Loading database tables...")
+                database.loadSkins((err, rows) => {
+                    if(err){
+                        console.log(err.message);
+                        process.exit();
+                    }
+                    else{
+                        PlayerSkins.setSkins(rows);
+                        console.log("Database tables loaded.\n")
+                        
+                        server.listen(settings.tcp_port, () => {
+                            socket.bind(settings.udp_port);
+                        });   
+                    }
+                });
             }
         });
     });

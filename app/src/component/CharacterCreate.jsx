@@ -53,7 +53,7 @@ class CharacterCreate extends React.Component{
             return;
         }
 
-        RequestSender.createCharacter(this.state.name, this.state.skinID);
+        RequestSender.createCharacter(this.state.name, this.state.currIndex+1);
     }
 
     get currSkin(){
