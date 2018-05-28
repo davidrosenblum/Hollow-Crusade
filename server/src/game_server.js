@@ -5,10 +5,12 @@ let net = require("net"),
 
 let DatabaseInquisitor = require("./js/DatabaseInquisitor"),
     GameEvent = require("./js/GameEvent"),
+    OPC = require("./js/Comm").OPC,
     Player = require("./js/Player"),
     PlayerSkins = require("./js/PlayerSkins"),
     Room = require("./js/Room"),
     Settings = require("./js/Settings"),
+    Status = require("./js/Comm").Status,
     UDPMessage = require("./js/UDPMessage");
 
 const VERSION = "0.1.0",
@@ -19,35 +21,6 @@ const VERSION = "0.1.0",
 const TEAM_ID_PLAYERS = 1,
     TEAM_ID_ENEMIES = 2,
     TEAM_ID_NEUTRALS = 3;
-
-const STATUS_GOOD = 2,
-    STATUS_BAD = 4,
-    STATUS_ERR = 5;
-
-const OPC_AUTH = 1,
-    OPC_LOGIN = 2,
-    OPC_LOGOUT = 3,
-    OPC_CHARACTER_LIST = 4,
-    OPC_CHARACTER_SELECT = 5,
-    OPC_CHARACTER_CREATE = 6,
-    OPC_CHARACTER_DELETE = 7,
-    OPC_ROOM_CHANGE = 8,
-    OPC_ROOM_STATS = 9,
-    OPC_CHAT_MESSAGE = 10,
-    OPC_OBJECT_CREATE = 11,
-    OPC_OBJECT_DELETE = 12,
-    OPC_OBJECT_UPDATE = 13,
-    OPC_OBJECT_STATS =  14,
-    OPC_FX_SPAWN = 15,
-    BATTLE_NODE_CREATE = 16,
-    BATTLE_NODE_DELETE = 17,
-    BATTLE_NODE_UPDATE = 18,
-    BATTLE_ENTER = 19,
-    BATTLE_EXIT = 20,
-    BATTLE_PLAYERS_TURN = 21,
-    BATTLE_CPU_TURN = 22,
-    BATTLE_SPELL_SELECT = 23,
-    BATTLE_SPELL_CAST = 24;
 
 let settings = null,
     database = null,
@@ -121,73 +94,76 @@ let handleSocketData = function(socket, message){
 };
 
 let processSocketData = function(socket, opc, data){
-    if(opc === OPC_AUTH){
+    if(opc === OPC.AUTH){
         processAuth(socket, data.version || "", data.udpPort || -1);
     }
-    else if(opc === OPC_LOGIN){
+    else if(opc === OPC.LOGIN){
         processSocketLogin(socket, data.username || "", data.password || "");
     }
-    else if(opc === OPC_LOGOUT){
+    else if(opc === OPC.LOGOUT){
         processSocketLogout(socket);  
     }
-    else if(opc === OPC_CHARACTER_LIST){
+    else if(opc === OPC.CHARACTER_LIST){
         processCharacterList(socket);
     }
-    else if(opc === OPC_CHARACTER_SELECT){
+    else if(opc === OPC.CHARACTER_SELECT){
         processCharacterSelect(socket, data.name || "");
     }
-    else if(opc === OPC_CHARACTER_CREATE){
+    else if(opc === OPC.CHARACTER_CREATE){
         processCharacterCreate(socket, data.name || "", data.skinID || 1);
     }
-    else if(opc === OPC_CHARACTER_DELETE){
+    else if(opc === OPC.CHARACTER_DELETE){
         processCharacterDelete(socket, data.name || "");
     }
-    else if(opc === OPC_ROOM_CHANGE){
+    else if(opc === OPC.ROOM_CHANGE){
         processRoomChange(socket, data.roomName);
     }
-    else if(opc === OPC_CHAT_MESSAGE){
+    else if(opc === OPC.CHAT_MESSAGE){
         processChat(socket, data.chat || "");
     }
-    else if(opc === OPC_OBJECT_STATS){
+    else if(opc === OPC.OBJECT_STATS){
         processObjectStats(socket, data.objectID || -1);
+    }
+    else if(opc === OPC.PLAYER_SKIN_CHANGE){
+        processPlayerSkinChange(socket, data.skinID || -1);
     }
 };
 
 let processAuth = function(socket, version, udpPort){
     if(version !== CLIENT_VERSION){
-        send(socket, OPC_AUTH, "Wrong client version.", STATUS_BAD);
+        send(socket, OPC.AUTH, "Wrong client version.", Status.BAD);
     }
     else{
         socket.udpPort = udpPort;
-        send(socket, OPC_AUTH, {socketID: socket.socketID}, STATUS_GOOD);
+        send(socket, OPC.AUTH, {socketID: socket.socketID}, Status.GOOD);
     }
 };
 
 let processSocketLogin = function(socket, username, password){
     if(socket.username){
-        send(socket, OPC_LOGIN, "You are logged in already.", STATUS_BAD);
+        send(socket, OPC.LOGIN, "You are logged in already.", Status.BAD);
         return;
     }
 
     if(username in accounts){
-        send(socket, OPC_LOGIN, "Account already online.", STATUS_BAD);
+        send(socket, OPC.LOGIN, "Account already online.", Status.BAD);
         return;
     }
 
     database.retrieveAccountWithHash(username, (err, rows) => {
         if(err){
             console.log(err.message);
-            send(socket, OPC_LOGIN, "Server error.", STATUS_ERR);
+            send(socket, OPC.LOGIN, "Server error.", Status.ERR);
         }
         else if(rows.length < 1){
-            send(socket, OPC_LOGIN, "Wrong username or password.", STATUS_BAD);
+            send(socket, OPC.LOGIN, "Wrong username or password.", Status.BAD);
         }
         else{
             let account = rows[0],
                 passHash = database.hash(password, account.salt);
 
             if(account.username !== username || passHash !== account.password){
-                send(socket, OPC_LOGIN, "Wrong username or password.", STATUS_BAD);
+                send(socket, OPC.LOGIN, "Wrong username or password.", Status.BAD);
             }
             else{
                 socket.username = username;
@@ -195,7 +171,7 @@ let processSocketLogin = function(socket, username, password){
 
                 accounts[username] = socket;
 
-                send(socket, OPC_LOGIN, "Successful login", STATUS_GOOD);
+                send(socket, OPC.LOGIN, "Successful login", Status.GOOD);
             }
         }
     });
@@ -206,57 +182,57 @@ let processSocketLogout = function(socket){
         delete accounts[socket.username]; 
         socket.username = null;
 
-        send(socket, OPC_LOGOUT, "You have logged out.", STATUS_GOOD);
+        send(socket, OPC.LOGOUT, "You have logged out.", Status.GOOD);
     }
     else{
-        send(socket, OPC_LOGOUT, "You are not logged in.", STATUS_BAD);
+        send(socket, OPC.LOGOUT, "You are not logged in.", Status.BAD);
     }
 };
 
 let processCharacterList = function(socket){
     if(!socket.username){
-        send(socket, OPC_CHARACTER_LIST, "You are not logged in.", STATUS_BAD);
+        send(socket, OPC.CHARACTER_LIST, "You are not logged in.", Status.BAD);
     }
 
     database.retrieveCharacterList(socket.username, (err, rows) => {
         if(err){
             console.log(err.message);
-            send(socket, OPC_CHARACTER_LIST, "Server error.", STATUS_ERR);
+            send(socket, OPC.CHARACTER_LIST, "Server error.", Status.ERR);
         }
         else{
-            send(socket, OPC_CHARACTER_LIST, rows, STATUS_GOOD);
+            send(socket, OPC.CHARACTER_LIST, rows, Status.GOOD);
         }
     });
 };
 
 let processCharacterCreate = function(socket, name, skinID=1){
     if(!socket.username){
-        send(socket, OPC_CHARACTER_CREATE, "You are not logged in.", STATUS_BAD);
+        send(socket, OPC.CHARACTER_CREATE, "You are not logged in.", Status.BAD);
         return;
     }
 
     database.createCharacter(socket.username, name, skinID, err => {
         if(err){
-            send(socket, OPC_CHARACTER_CREATE, err.message, STATUS_BAD);
+            send(socket, OPC.CHARACTER_CREATE, err.message, Status.BAD);
         }
         else{
-            send(socket, OPC_CHARACTER_CREATE, `Character "${name}" created.`, STATUS_GOOD);
+            send(socket, OPC.CHARACTER_CREATE, `Character "${name}" created.`, Status.GOOD);
         }
     });
 };
 
 let processCharacterDelete = function(socket, name){
     if(!socket.username){
-        send(socket, OPC_CHARACTER_DELETE, "You are not logged in.", STATUS_BAD);
+        send(socket, OPC.CHARACTER_DELETE, "You are not logged in.", Status.BAD);
         return;
     }
 
     database.deleteCharacter(socket.username, name, err => {
         if(err){
-            send(socket, OPC_CHARACTER_DELETE, err.message, STATUS_ERR);
+            send(socket, OPC.CHARACTER_DELETE, err.message, Status.ERR);
         }
         else{
-            send(socket, OPC_CHARACTER_DELETE, `"${name}" has been deleted.`, STATUS_GOOD);
+            send(socket, OPC.CHARACTER_DELETE, `"${name}" has been deleted.`, Status.GOOD);
             processCharacterList(socket);
         }
     });
@@ -264,17 +240,17 @@ let processCharacterDelete = function(socket, name){
 
 let processCharacterSelect = function(socket, name){
     if(!socket.username){
-        send(OPC_CHARACTER_SELECT, "You are not logged in.", STATUS_BAD);
+        send(OPC.CHARACTER_SELECT, "You are not logged in.", Status.BAD);
         return;
     }
 
     database.retrieveCharacter(socket.username, name, (err, rows) => {
         if(err){
             console.log(err.message);
-            send(OPC_CHARACTER_SELECT, "Server error.", STATUS_ERR);
+            send(OPC.CHARACTER_SELECT, "Server error.", Status.ERR);
         }
         else if(rows.length < 1){
-            send(OPC_CHARACTER_SELECT, "Unable to load character.", STATUS_BAD);
+            send(OPC.CHARACTER_SELECT, "Unable to load character.", Status.BAD);
         }
         else{
             createPlayer(socket, rows[0]);
@@ -309,16 +285,41 @@ let processObjectStats = function(socket, objectID){
         let object = socket.room.getObject(objectID);
         
         if(object){
-            send(socket, OPC_OBJECT_STATS, object.getStats(), STATUS_GOOD);
+            send(socket, OPC.OBJECT_STATS, object.getStats(), Status.GOOD);
         }
         else{
-            send(socket, OPC_OBJECT_STATS, "Object not found.", STATUS_BAD);
+            send(socket, OPC.OBJECT_STATS, "Object not found.", Status.BAD);
         }
     }
     else{
-        send(socket, OPC_OBJECT_STATS, "You are not in a room.", STATUS_BAD);
+        send(socket, OPC.OBJECT_STATS, "You are not in a room.", Status.BAD);
     }
 };
+
+let processPlayerSkinChange = function(socket, skinID){
+    if(socket.room && socket.player){
+        try{
+            socket.player.applySkin(skinID);
+        }
+        catch(err){
+            send(socket, OPC.PLAYER_SKIN_CHANGE, err.message, Status.BAD);
+            return;
+        }
+
+        //sendChat(socket, OPC.PLAYER_SKIN_CHANGE, `Changed to skin ${PlayerSkins.getSkin(skinID).name}.`, Status.GOOD);
+
+        processObjectStats(socket, socket.player.objectID);
+
+        let data = {
+            objectID: socket.player.objectID,
+            skinID: socket.player.skinID
+        };
+        sendRoom(socket.room, OPC.PLAYER_SKIN_CHANGE, data, Status.GOOD);
+    }
+    else{
+        send(socket, OPC.PLAYER_SKIN_CHANGE, "You are not in a room.", Status.BAD);
+    }
+};  
 
 let processAdminCommand = function(socket, chat){
     if(socket.accessLevel < 2){
@@ -359,7 +360,7 @@ let processAdminCommand = function(socket, chat){
             socket.player.addTokens(val || 0);
         }
         else{
-            sendChat(socket, `Cannot ADD '${attr}'`);
+            sendChat(socket, `Cannot add '${attr}'`);
         }
     }
     else if(command === "set"){
@@ -371,7 +372,12 @@ let processAdminCommand = function(socket, chat){
             return;
         }
 
-        sendChat(socket, `Cannot SET '${values[1]}'.`);
+        if(attr === "skin"){
+            processPlayerSkinChange(socket, val);
+        }
+        else{
+            sendChat(socket, `Cannot set '${attr}'.`);
+        }
     }
     else if(command === "kill"){
         room.deleteObject(values[0] || 0);
@@ -388,14 +394,14 @@ let processAdminCommand = function(socket, chat){
 };
 
 let sendChat = function(socket, chat, sender=null){
-    send(socket, OPC_CHAT_MESSAGE, {chat: chat, sender: sender});
+    send(socket, OPC.CHAT_MESSAGE, {chat: chat, sender: sender});
 };
 
 let sendRoomChat = function(room, chat, sender=null){
-    sendRoom(room, OPC_CHAT_MESSAGE, {chat: chat, sender: sender});
+    sendRoom(room, OPC.CHAT_MESSAGE, {chat: chat, sender: sender});
 };
 
-let sendRoom = function(room, opc, data, status=STATUS_GOOD){
+let sendRoom = function(room, opc, data, status=Status.GOOD){
     let jsonMsg = createJSONMessage(opc, data, status);
 
     room.forEachSocket(sock => {
@@ -403,11 +409,11 @@ let sendRoom = function(room, opc, data, status=STATUS_GOOD){
     });
 };
 
-let send = function(socket, opc, data, status=STATUS_GOOD){
+let send = function(socket, opc, data, status=Status.GOOD){
     socket.write(createJSONMessage(opc, data, status) + MSG_DELIM);
 };
 
-let createJSONMessage = function(opc, data, status=STATUS_GOOD){
+let createJSONMessage = function(opc, data, status=Status.GOOD){
     let message = {
         opc: opc,
         data: (typeof data === "string") ? {message: data} : data,
@@ -433,10 +439,10 @@ let handleRoomAddSocket = function(evt){
     let room = evt.emitter,
         target = evt.target;
 
-    send(target, OPC_ROOM_CHANGE, {roomName: room.roomName, roomID: room.roomID, op: "join"});
+    send(target, OPC.ROOM_CHANGE, {roomName: room.roomName, roomID: room.roomID, op: "join"});
 
     room.forEachObject(object => {
-        send(target, OPC_OBJECT_CREATE, object.getSpawnData());
+        send(target, OPC.OBJECT_CREATE, object.getSpawnData());
     });
 
     room.addObject(target.player);
@@ -448,7 +454,7 @@ let handleRoomRemoveSocket = function(evt){
     let room = evt.emitter,
         target = evt.target;
 
-    send(target, OPC_ROOM_CHANGE, {roomName: room.roomName, roomID: room.roomID, op: "leave"});
+    send(target, OPC.ROOM_CHANGE, {roomName: room.roomName, roomID: room.roomID, op: "leave"});
 
     room.removeObject(target.player.objectID);
 
@@ -460,7 +466,7 @@ let handleRoomAddObject = function(evt){
         object = evt.target;
 
     room.forEachSocket(socket => {
-        send(socket, OPC_OBJECT_CREATE, object.getSpawnData());
+        send(socket, OPC.OBJECT_CREATE, object.getSpawnData());
     });
 };
 
@@ -469,7 +475,7 @@ let handleRoomRemoveObject = function(evt){
         object = evt.target;
 
     room.forEachSocket(socket => {
-        send(socket, OPC_OBJECT_DELETE, {objectID: object.objectID});
+        send(socket, OPC.OBJECT_DELETE, {objectID: object.objectID});
     });
 };
 

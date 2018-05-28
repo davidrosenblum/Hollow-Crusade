@@ -32,4 +32,7 @@ const Status = {
     ERR:    5
 };
 
-export { OPC, Status };
+module.exports = {
+    Status: Status,
+    OPC: OPC
+};

@@ -126,6 +126,12 @@ let Client = class Client{
         else if(opc === OPC.OBJECT_STATS){
             this.handleObjectStats(data, status);
         }
+        else if(opc === OPC.FX_SPAWN){
+            // implement later
+        }
+        else if(opc === OPC.PLAYER_SKIN_CHANGE){
+            this.handlePlayerSkinChange(data, status);
+        }
     }
 
     handleAuth(data, status){
@@ -209,6 +215,15 @@ let Client = class Client{
             if(GameController.player && GameController.player.objectID === data.objectID){
                 UIController.hudSelf(data);
             }
+        }
+    }
+
+    handlePlayerSkinChange(data, status){
+        if(status === Status.GOOD){
+            GameController.updatePlayerSkin(data.objectID, data.skinID);
+        }
+        else if(data.message){
+            UIController.hudChat(data.message);
         }
     }
 
