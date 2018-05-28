@@ -72,7 +72,7 @@ class App extends React.Component{
                 <Login currMenu={this.state.currMenu} />
                 <CharacterSelect currMenu={this.state.currMenu} characterList={this.state.characterList} characterListLoading={this.state.characterListLoading} />
                 <CharacterCreate currMenu={this.state.currMenu} />
-                <Game currMenu={this.state.currMenu} />
+                <Game currMenu={this.state.currMenu}/>
                 <Modal message={this.state.modalMessage}/>
             </div>
         );

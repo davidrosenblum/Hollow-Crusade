@@ -187,7 +187,7 @@ let GameController = class GameController extends dark.EventEmitter{
     }
 
     updatePlayerMovement(evt){
-        if(this.keyHandler.numKeys > 0){
+        if(this.keyHandler.numKeys > 0 && (document.activeElement instanceof window.HTMLInputElement === false)){
             if(this.keyHandler.isKeyDown(87)){
                 this.player.moveUp(this.collidables, this.mapBounds, this.scroller);
                 this.playerUpdated();

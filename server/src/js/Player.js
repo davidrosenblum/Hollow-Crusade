@@ -35,22 +35,20 @@ let Player = class Player extends GameCombatObject{
 
     restoreLevel(level){
         for(let i = 1; i < level; i++){
-            this.levelUp(false);
+            this.levelUp(true);
         }
 
         this.fillHealth();
         this.fillMana();
     }
 
-    levelUp(emit=true){
+    levelUp(isRestoring=false){
         let nextLevel = this.level + 1;
 
         if(nextLevel <= Player.LEVEL_CAP){
             this.level++;
             this.xp = 0;
             this.xpNeeded *= 1.08;
-            
-            this.points++;
 
             this.healthCap += (this.level % 10);
 
@@ -64,8 +62,9 @@ let Player = class Player extends GameCombatObject{
             this.criticalModifier += 0.001;
             this.criticalMultiplier += 0.0051;
 
-            if(emit){
+            if(!isRestoring){
                 this.emit(new GameEvent(GameEvent.PLAYER_LEVEL_UP, null, this.level));
+                this.points++;
             }
         }
 
@@ -85,16 +84,21 @@ let Player = class Player extends GameCombatObject{
     }
 
     addXP(xp){
-        this.emit(new GameEvent(GameEvent.PLAYER_XP, null, xp));
-
-        let xpRemaining = xp;
+        let xpRemaining = xp,
+            levelsEarned = 0;
         
         while(this.xpToGo <= xpRemaining){
             xpRemaining -= this.xpToGo;
-            this.levelUp();
+            levelsEarned++;
         }
 
         this.xp += xpRemaining;
+
+        this.emit(new GameEvent(GameEvent.PLAYER_XP, null, xp));
+
+        for(let i = 0; i < levelsEarned; i++){
+            this.levelUp();            
+        }
     }
 
     addMoney(amount){
