@@ -94,7 +94,7 @@ let GameController = class GameController extends dark.EventEmitter{
 
         /* remove this later... */
         window.dark = dark;
-        window.GameController = this;
+        window.game = this;
         //dark.stage.showHitboxes = true;
     }
 

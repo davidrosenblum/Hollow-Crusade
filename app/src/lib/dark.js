@@ -1317,7 +1317,10 @@ let dark = (function(){
             this.resizeDisplay(width, height);
 
             this.canvas.addEventListener("click", evt => {
-                let mouse = new DisplayObject(evt.clientX, evt.clientY, 3, 3);
+                let x = evt.clientX * (this.width / this.canvasWidth),
+                    y = evt.clientY * (this.height / this.canvasHeight);
+
+                let mouse = new DisplayObject(x, y, 3, 3);
 
                 stage.forAllChildren(child => {
                     if(mouse.hitboxCollision(child, true)){
@@ -1393,11 +1396,11 @@ let dark = (function(){
         }
 
         get canvasWidth(){
-            return this.canvas.style.width || this.canvas.width;
+            return this.canvas.offsetWidth || this.canvas.width;
         }
 
         get canvasHeight(){
-            return this.canvas.style.height || this.canvas.height;
+            return this.canvas.offsetHeight || this.canvas.height;
         }
     };
 
