@@ -5,10 +5,12 @@ let net = require("net"),
 
 let DatabaseInquisitor = require("./js/DatabaseInquisitor"),
     GameEvent = require("./js/GameEvent"),
+    NPCFactory = require("./js/NPCFactory"),
     OPC = require("./js/Comm").OPC,
     Player = require("./js/Player"),
     PlayerSkins = require("./js/PlayerSkins"),
     Room = require("./js/Room"),
+    RoomFactory = require("./js/RoomFactory"),
     Settings = require("./js/Settings"),
     Status = require("./js/Comm").Status,
     UDPMessage = require("./js/UDPMessage");
@@ -16,7 +18,7 @@ let DatabaseInquisitor = require("./js/DatabaseInquisitor"),
 const VERSION = "0.1.0",
     CLIENT_VERSION = "0.1.0",
     MSG_DELIM = "?&?",
-    DEFAULT_ROOM = 1;
+    DEFAULT_MAP = 1;
 
 const TEAM_ID_PLAYERS = 1,
     TEAM_ID_ENEMIES = 2,
@@ -27,8 +29,6 @@ let settings = null,
     sockets = {},
     accounts = {},
     rooms = {},
-    instances = {},
-    lastInstanceID = 100,
     lastSocketID = 0;
 
 net.Socket.prototype.toString = function(){
@@ -262,7 +262,7 @@ let processCharacterSelect = function(socket, name){
 };
 
 let processRoomChange = function(socket, roomID){
-    let room = rooms[roomID] || rooms[DEFAULT_ROOM];
+    let room = rooms[roomID] || rooms[DEFAULT_MAP];
 
     if(socket.room){
         socket.room.removeSocket(socket);
@@ -275,6 +275,9 @@ let processChat = function(socket, chat){
     if(socket.room){
         if(chat.charAt(0) === "~"){
             processAdminCommand(socket, chat.substr(1));
+        }
+        else if(chat.charAt(0) === "/"){
+            processCommand(socket, chat.substr(1));
         }
         else{
             sendRoomChat(socket.room, chat, socket.player.name);
@@ -321,7 +324,40 @@ let processPlayerSkinChange = function(socket, skinID){
     else{
         send(socket, OPC.PLAYER_SKIN_CHANGE, "You are not in a room.", Status.BAD);
     }
-};  
+};
+
+let processCommand = function(socket, chat){
+    let values = chat.split(" "),
+        command = values.shift();
+
+        console.log(chat);
+
+    if(command === "get"){
+        let attr = values[0] || "";
+
+        if(!attr){
+            sendChat(socket, "Expected get <property>");
+            return;
+        }
+
+        if(attr === "map"){
+            let room = socket.room;
+            sendChat(socket, `Map = (${room.roomID}) "${room.roomName}"`);
+        }
+        else if(attr === "name"){
+            sendChat(socket, `Name = "${socket.player.name}"`);
+        }
+        else if(attr === "level"){
+            sendChat(socket, `Level = ${socket.player.level}`);
+        }
+        else{
+            sendChat(socket, `Cannot get '${attr}'.`);
+        }
+    }
+    else{
+        sendChat(socket, `'${command}' is an invalid command.`);
+    }
+};
 
 let processAdminCommand = function(socket, chat){
     if(socket.accessLevel < 2){
@@ -378,7 +414,12 @@ let processAdminCommand = function(socket, chat){
             processPlayerSkinChange(socket, val);
         }
         else if(attr === "map"){
-            processRoomChange(socket, val);
+            if(val !== socket.room.roomID){
+                processRoomChange(socket, val);
+            }
+            else{
+                sendChat(socket, "You are already in that map.");
+            }
         }
         else{
             sendChat(socket, `Cannot set '${attr}'.`);
@@ -394,7 +435,7 @@ let processAdminCommand = function(socket, chat){
         broadcastChat(values[0]);
     }
     else{
-        sendChat(socket, `${command} is an invalid command.`);
+        sendChat(socket, `'${command}' is an invalid command.`);
     }
 };
 
@@ -444,6 +485,7 @@ let handleRoomAddSocket = function(evt){
     let room = evt.emitter,
         target = evt.target;
 
+    console.log(room);
     send(target, OPC.ROOM_CHANGE, {roomName: room.roomName, roomID: room.roomID, op: "join"});
 
     room.forEachObject(object => {
@@ -539,12 +581,8 @@ let createPlayer = function(socket, saveData){
     });
 };
 
-let createRoom = function(id, name){
-    if(id in rooms){
-        return;
-    }
-
-    let room = new Room(id, name);
+let createMapRoom = function(name){
+    let room = RoomFactory.create(name);
 
     room.on(GameEvent.ROOM_ADD_SOCKET, handleRoomAddSocket);
     room.on(GameEvent.ROOM_REMOVE_SOCKET, handleRoomRemoveSocket);
@@ -552,7 +590,23 @@ let createRoom = function(id, name){
     room.on(GameEvent.ROOM_REMOVE_OBJECT, handleRoomRemoveObject);
     room.on(GameEvent.ROOM_UPDATE_OBJECT, handleRoomUpdateObject);
 
-    rooms[id] = room;
+    rooms[room.roomID] = room;
+
+    return room;
+};
+
+let createInstanceRoom = function(name){
+    let instance = RoomFactory.createInstance(name);
+
+    instance.on(GameEvent.ROOM_ADD_SOCKET, handleRoomAddSocket);
+    instance.on(GameEvent.ROOM_REMOVE_SOCKET, handleRoomRemoveSocket);
+    instance.on(GameEvent.ROOM_ADD_OBJECT, handleRoomAddObject);
+    instance.on(GameEvent.ROOM_REMOVE_OBJECT, handleRoomRemoveObject);
+    instance.on(GameEvent.ROOM_UPDATE_OBJECT, handleRoomUpdateObject);
+
+    rooms[instance.roomID] = instance;
+
+    return instance;
 };
 
 let connectDB = function(callback){
@@ -572,7 +626,7 @@ let connectDB = function(callback){
 let loadDatabaseTables = function(callback){
     let checkDone = function(){
         numDone++;
-        if(numDone === 2){
+        if(numDone === 3){
             callback();
         }
     };
@@ -585,10 +639,25 @@ let loadDatabaseTables = function(callback){
             process.exit();
         }
         else{
-            for(let row of rows){
-                createRoom(row.map_id, row.name);
-            }
+            RoomFactory.setRoomData(rows);
             console.log(" - Maps loaded.");
+
+            // create starting rooms
+            createMapRoom("Titan's Landing");
+            createMapRoom("Northern Keep");
+
+            checkDone();
+        }
+    });
+
+    database.loadNPCs((err, rows) => {
+        if(err){
+            console.log(err.message);
+            process.exit();
+        }
+        else{
+            NPCFactory.setNPCData(rows);
+            console.log(" - NPCs loaded.");
             checkDone();
         }
     });
@@ -600,8 +669,7 @@ let loadDatabaseTables = function(callback){
         }
         else{
             PlayerSkins.setSkins(rows);
-            console.log(" - Player skins loaded.")
-            
+            console.log(" - Skins loaded.");
             checkDone();   
         }
     });
