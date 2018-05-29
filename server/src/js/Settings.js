@@ -37,7 +37,7 @@ let Settings = class Settings{
 };
 
 Settings.DEFAULT_SETTINGS = {
-    http_port: 80,
+    http_port: 8080,
     tcp_port: 6615,
     udp_port: 6617,
     mysql: {

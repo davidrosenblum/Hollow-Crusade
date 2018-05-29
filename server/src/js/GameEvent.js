@@ -11,6 +11,7 @@ GameEvent.ROOM_REMOVE_OBJECT = "room-remove-object";
 GameEvent.ROOM_UPDATE_OBJECT = "room-update-object";
 GameEvent.ROOM_ADD_SOCKET = "room-add-socket";
 GameEvent.ROOM_REMOVE_SOCKET = "room-remove-socket";
+GameEvent.UNIT_DODGE = "unit-dodge";
 GameEvent.UNIT_UPDATE = "unit-update";
 GameEvent.UNIT_DEATH = "unit-death";
 GameEvent.PLAYER_XP = "player-xp"

@@ -69,12 +69,12 @@ let Room = class Room extends EventEmitter{
     }
 
     removeObject(id){
-        let object = this.objects[id];
+        let object = (typeof id === "number") ? this.objects[id] : object;
         if(object){
             delete this.objects[id];
-            object.objectID = -1;
 
-            this.emit(new GameEvent(GameEvent.ROOM_REMOVE_OBJECT, {objectID: id}));
+            this.emit(new GameEvent(GameEvent.ROOM_REMOVE_OBJECT, object));
+            object.objectID = -1;
         }
     }
 
@@ -132,7 +132,7 @@ let Room = class Room extends EventEmitter{
     }
 
     toString(){
-        return `Instance-${this.roomID}: '${this.roomName}'`;
+        return `Room-${this.roomID} '${this.roomName}'`;
     }
 };
 Room.NPC_RESPAWN_DELAY = 2 * 60 * 1000;

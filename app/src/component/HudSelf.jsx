@@ -14,15 +14,16 @@ class HudSelf extends React.Component{
         }
 
         return {
+            name:       data.name,
             lvl:        data.level,
-            hp:         data.health.toFixed(0),
-            hpCap:      data.healthCap.toFixed(0),
+            hp:         parseFloat(data.health || 0).toFixed(1),
+            hpCap:      parseFloat(data.healthCap || 0).toFixed(1),
             hpPercent:  ((data.health / data.healthCap) * 100).toFixed(2),
-            mp:         data.mana.toFixed(0),
-            mpCap:      data.manaCap.toFixed(0),
+            mp:         parseFloat(data.mana || 0).toFixed(1),
+            mpCap:      parseFloat(data.manaCap || 0).toFixed(1),
             mpPercent:  ((data.mana / data.manaCap) * 100).toFixed(2),
-            xp:         data.xp.toFixed(0),
-            xpNeeded:   data.xpNeeded.toFixed(0),
+            xp:         parseFloat(data.xp).toFixed(0),
+            xpNeeded:   parseFloat(data.xpNeeded).toFixed(0),
             xpPercent:  ((data.xp / data.xpNeeded) * 100).toFixed(2)
         };
     }
@@ -38,8 +39,7 @@ class HudSelf extends React.Component{
                 <table>
                     <tbody>
                         <tr>
-                            <td>Level</td>
-                            <td colSpan="3">{`${data.lvl}`}</td>
+                            <td colSpan="3">{data.name} (lev {data.lvl})</td>
                         </tr>
                         <tr>
                             <td>Health</td>

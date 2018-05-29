@@ -28,6 +28,7 @@ let dark = (function(){
     Event.MOVE = "move";
     Event.REMOVE = "remove";
     Event.RESIZE = "resize"
+    Event.TICK = "tick";
 
     let EventEmitter = class EventEmitter{
         constructor(){
@@ -302,11 +303,11 @@ let dark = (function(){
         }
 
         get drawCenterX(){
-            return this.drawX + this.drawWidth / 2;
+            return this.drawX + this.width / 2;
         }
 
         get drawCenterY(){
-            return this.drawY + this.drawHeight / 2;
+            return this.drawY + this.height / 2;
         }
 
         get parent(){
@@ -924,6 +925,14 @@ let dark = (function(){
             }
         }
 
+        lookAt(target){
+            this._scroll.x = 0;
+            this._scroll.y = 0;
+            this.update();
+            this.scrollX(-(this._scroll.width/2 - target.drawCenterX));
+            this.scrollY(-(this._scroll.height/2 - target.drawCenterY));
+        }
+
         scrollXWith(target, distance){
             if(target.centerX <= this._scroll.centerX){
                 if(distance < 0){
@@ -1335,7 +1344,11 @@ let dark = (function(){
             this.canvas.setAttribute("dark-canvas", "true");
 
             this.resize(width, height);
-            this.resizeDisplay(width, height);
+
+            this.framesPerTick = 1; // update every 30 frames
+            this._delta = 0;
+            this._then = Date.now();
+            this._milliTime = 1000 / 60;
 
             this.canvas.addEventListener("click", evt => {
                 let x = evt.clientX * (this.width / this.canvasWidth),
@@ -1372,7 +1385,22 @@ let dark = (function(){
             this.fullscreenResize();
         }
 
+        updateDelta(){
+            let now = Date.now(),
+                delta = (now - this._then) / this._milliTime;
+
+            this._delta += delta;
+            this._then = now;
+
+            while(this._delta >= 1){
+                this.emit(new Event(Event.TICK));
+                this._delta--;
+            }
+        }
+
         draw(){
+            this.updateDelta();
+
             if(this.visible){
                 this.emit(new Event(Event.DRAW));
                 this.clear();
@@ -1629,7 +1657,7 @@ let dark = (function(){
         }
     };
 
-    let init = function(element, drawWidth=550, drawHeight=400, canvasWidth=550, canvasHeight=400){
+    let init = function(element, drawWidth=550, drawHeight=400, canvasWidth=-1, canvasHeight=-1){
         if(initialized){
             return false;
         }
@@ -1640,20 +1668,20 @@ let dark = (function(){
         element = (!element || (element instanceof window.Element === false)) ? document.body : element;
 
         stage.resize(drawWidth, drawHeight);
-        stage.resizeDisplay(canvasWidth, canvasHeight);
+
+        if(canvasWidth > 0 && canvasHeight > 0){
+            stage.resizeDisplay(canvasWidth, canvasHeight);
+        }
 
         element.appendChild(stage.canvas);
 
         initialized = true;
         renderLoop();
 
-        dark.stage.visible = true;
-
         return true;
     };
 
     let kill = function(){
-        stage.visible = false;
         stage.forEachChild(child => child.remove());
 
         if(stage.canvas.parentNode){

@@ -1,4 +1,5 @@
-let GameObject = require("./GameObject");
+let GameEvent = require("./GameEvent"),
+    GameObject = require("./GameObject");
 
 let GameCombatObject = class GameCombatObject extends GameObject{
     constructor(opts){
@@ -36,24 +37,23 @@ let GameCombatObject = class GameCombatObject extends GameObject{
     }
 
     takeDamageFrom(damage, damageType, attacker){
-        if(this.rollDodge()){
-            // emit dodge?
+        if(this.rollDodge(damageType)){
+            this.emit(new GameEvent(GameEvent.UNIT_DODGE, attacker, damage));
             return false;
         }
 
-        damage -= damage * this.resistance[damageType];
-
+        damage -= damage * (this.resistance[damageType] || 0);
         this.health -= damage;
 
         if(this.health <= 0){
-            // emit death?
+            this.emit(new GameEvent(GameEvent.UNIT_DEATH, attacker, damage));
             return true;
         }
         return false;
     }
 
     rollDodge(damageType){
-        return Math.random() + this.defense[damageType] >= GameCombatObject.DEF_ROLL_REQUIRED; 
+        return Math.random() + (this.defense[damageType] || 0) >= GameCombatObject.DEF_ROLL_REQUIRED; 
     }
 
     rollCritical(){

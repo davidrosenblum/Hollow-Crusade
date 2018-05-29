@@ -15,11 +15,11 @@ class HudTarget extends React.Component{
 
         return {
             name:       data.name,
-            lvl:        data.level || "",
-            hp:         data.health.toFixed(1),
-            hpCap:      data.healthCap.toFixed(1),
-            mp:         data.mana.toFixed(1),
-            mpCap:      data.manaCap.toFixed(1),
+            lvl:        `(${data.level})` || "",
+            hp:         parseFloat(data.health || 0).toFixed(1),
+            hpCap:      parseFloat(data.healthCap || 0).toFixed(1),
+            mp:         parseFloat(data.mana || 0).toFixed(1),
+            mpCap:      parseFloat(data.manaCap || 0).toFixed(1),
             defP:       (data.defensePhysical * 100).toFixed(2),
             defE:       (data.defenseElemental * 100).toFixed(2),
             resP:       (data.resistancePhysical * 100).toFixed(2),

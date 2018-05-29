@@ -110,6 +110,14 @@ let GameController = class GameController extends dark.EventEmitter{
         this.scene.removeChildren();
         this.foreground.removeChildren();
 
+        // remove scroll
+        this.background.x = 0;
+        this.background.y = 0;
+        this.scene.x = 0;
+        this.scene.y = 0;
+        this.foreground.x = 0;
+        this.foreground.y = 0;
+
         this.collidables = null;
         this.mapBounds = null;
         this.scroller = null;
@@ -230,12 +238,14 @@ let GameController = class GameController extends dark.EventEmitter{
 
         this.player = object;
         this.updatePlayerMovementRef = this.updatePlayerMovement.bind(this);
-        dark.stage.on(dark.Event.DRAW, this.updatePlayerMovementRef);
+        dark.stage.on(dark.Event.TICK, this.updatePlayerMovementRef);
+
+        this.scroller.lookAt(this.player);
     }
 
     releasePlayer(){
         if(this.player){
-            dark.stage.removeListener(dark.Event.DRAW, this.updatePlayerMovementRef);
+            dark.stage.removeListener(dark.Event.TICK, this.updatePlayerMovementRef);
             this.player = null;
             this.updatePlayerMovementRef = null;
         }

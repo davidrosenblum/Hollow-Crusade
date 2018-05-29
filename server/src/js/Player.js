@@ -35,6 +35,9 @@ let Player = class Player extends GameCombatObject{
     }
 
     restoreLevel(level){
+        level = Math.max(1, level);
+        level = Math.min(50, level);
+
         for(let i = 1; i < level; i++){
             this.levelUp(true);
         }
@@ -44,36 +47,47 @@ let Player = class Player extends GameCombatObject{
     }
 
     levelUp(isRestoring=false){
+        if(this.level === Player.LEVEL_CAP){
+            return;
+        }
+
         let nextLevel = this.level + 1;
 
         if(nextLevel <= Player.LEVEL_CAP){
-            this.level++;
+            this.level = nextLevel;
             this.xp = 0;
             this.xpNeeded *= 1.08;
 
-            this.healthCap += (this.level % 10);
+            this.healthCap += Math.floor(this.level / 10);
 
             if(this.level % 2 === 0){
                 this.manaCap++;
             }
 
-            this.defense.physical += 0.003;
-            this.defense.elemental += 0.002;
+            //this.defense.physical += 0.003;
+            //this.defense.elemental += 0.002;
 
             this.criticalModifier += 0.001;
             this.criticalMultiplier += 0.0051;
 
             if(!isRestoring){
                 this.emit(new GameEvent(GameEvent.PLAYER_LEVEL_UP, null, this.level));
-                this.points++;
+                this.addPoints(1);
             }
         }
 
         if(this.level === Player.LEVEL_CAP){
-            this.healthCap++;
             this.xp = 1;
             this.xpNeeded = 1;
         }
+
+        this.fillHealth();
+        this.fillMana();
+    }
+
+    restore(){
+        this.fillHealth();
+        this.fillMana();
     }
 
     fillHealth(){
@@ -85,32 +99,31 @@ let Player = class Player extends GameCombatObject{
     }
 
     addXP(xp){
-        let xpRemaining = xp,
-            levelsEarned = 0;
-        
-        while(this.xpToGo <= xpRemaining){
-            xpRemaining -= this.xpToGo;
-            levelsEarned++;
+        if(this.level === Player.LEVEL_CAP){
+            return;
         }
 
-        this.xp += xpRemaining;
+        let xpRemaining = xp,
+            levelsEarned = 0,
+            xpToGo = this.xpNeeded - this.xp;
+        
+        while(xpRemaining > 0 && xpToGo <= xpRemaining && this.level < Player.LEVEL_CAP){
+            this.levelUp();
+            xpRemaining -= xpToGo;
+            xpToGo = this.xpNeeded - this.xp;
+        }
+
+        if(this.level !== Player.LEVEL_CAP){
+            this.xp += xpRemaining;
+        }
 
         this.emit(new GameEvent(GameEvent.PLAYER_XP, null, xp));
-
-        for(let i = 0; i < levelsEarned; i++){
-            this.levelUp();            
-        }
     }
 
     addMoney(amount){
         if(this.money < Player.MAX_MONEY){
-            this.money += amount;
-
-            if(this.money > Player.MAX_MONEY){
-                this.money = Player.MAX_MONEY;
-            }
-
-            this.emit(new GameEvent(GameEvent.PLAYER_MONEY, null, amount));
+            this.money = Math.min(this.money + amount, Player.MAX_MONEY);
+            this.emit(new GameEvent(GameEvent.PLAYER_MONEY, null, amount));  
         }
     }
 
@@ -118,8 +131,7 @@ let Player = class Player extends GameCombatObject{
         if(this.money >= amount){
             this.money -= amount;
 
-            this.emit(new GameEvent(GameEvent.PLAYER_MONEY, null, -amount));
-
+            this.emit(new GameEvent(GameEvent.PLAYER_POINTS, null, -amount));
             return true;
         }
         return false;
@@ -127,13 +139,8 @@ let Player = class Player extends GameCombatObject{
 
     addPoints(amount){
         if(this.points < Player.MAX_POINTS){
-            this.points += amount;
-
-            if(this.points > Player.MAX_POINTS){
-                this.points = Player.MAX_POINTS;
-            }
-
-            this.emit(new GameEvent(GameEvent.PLAYER_POINTS, null, amount));
+            this.points = Math.min(this.points + amount, Player.MAX_POINTS);
+            this.emit(new GameEvent(GameEvent.PLAYER_POINTS, null, amount));  
         }
     }
 
@@ -141,8 +148,7 @@ let Player = class Player extends GameCombatObject{
         if(this.points >= amount){
             this.points -= amount;
             
-            this.emit(new GameEvent(GameEvent.PLAYER_POINTS, null, -amount));
-
+            this.emit(new GameEvent(GameEvent.PLAYER_POINTS, null, amount));
             return true;
         }
         return false;
@@ -150,15 +156,9 @@ let Player = class Player extends GameCombatObject{
 
     addTokens(amount){
         if(this.tokens < Player.MAX_TOKENS){
-            this.tokens += amount;
-
-            if(this.tokens > Player.MAX_TOKENS){
-                this.tokens = Player.MAX_TOKENS;
-            }
-
-            this.emit(new GameEvent(GameEvent.PLAYER_TOKENS, null, amount));
+            this.tokens = Math.min(this.tokens + amount, Player.MAX_TOKENS);
+            this.emit(new GameEvent(GameEvent.PLAYER_TOKENS, null, amount));  
         }
-        
     }
 
     spendTokens(amount){
@@ -166,7 +166,6 @@ let Player = class Player extends GameCombatObject{
             this.tokens -= amount;
 
             this.emit(new GameEvent(GameEvent.PLAYER_TOKENS, null, -amount));
-
             return true;
         }
         return false;
@@ -217,6 +216,10 @@ let Player = class Player extends GameCombatObject{
     }
 
     applySkin(id){
+        if(this.skinID === id){
+            return;
+        }
+
         // find new skin data
         let newSkin = PlayerSkins.getSkin(id);
         if(!newSkin){
@@ -239,15 +242,15 @@ let Player = class Player extends GameCombatObject{
         this.criticalMultiplier -= currSkin.criticalMultiplier;
         
         // apply new skin bonuses
-        this.healthCap += currSkin.health;
-        this.manaCap += currSkin.mana;
-        this.defense.physical += currSkin.defensePhysical;
-        this.defense.elemental += currSkin.defenseElemental;
-        this.resistance.physical += currSkin.resistancePhysical;
-        this.resistance.elemental += currSkin.resistanceElemental;
-        this.damageMultiplier += currSkin.damageMultiplier;
-        this.criticalModifier += currSkin.criticalModifier;
-        this.criticalMultiplier += currSkin.criticalMultiplier;
+        this.healthCap += newSkin.health;
+        this.manaCap += newSkin.mana;
+        this.defense.physical += newSkin.defensePhysical;
+        this.defense.elemental += newSkin.defenseElemental;
+        this.resistance.physical += newSkin.resistancePhysical;
+        this.resistance.elemental += newSkin.resistanceElemental;
+        this.damageMultiplier += newSkin.damageMultiplier;
+        this.criticalModifier += newSkin.criticalModifier;
+        this.criticalMultiplier += newSkin.criticalMultiplier;
 
         // set new skin
         this.skinID = id;
