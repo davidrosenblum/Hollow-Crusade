@@ -21,7 +21,8 @@ let Player = class Player extends GameCombatObject{
         this.tokens = (typeof saveData.tokens === "number") ? Math.max(0, saveData.tokens) : 0;
 
         this.skinID = (typeof saveData.skin_id === "number") ? Math.max(1,saveData.skin_id) : 1;
-
+        this.lastMapID = (typeof saveData.map_id === "number") ? Math.max(1, saveData.last_map) : 1;
+        
         this.spiritLevel = (typeof saveData.spirit_level === "number") ? Math.max(1, saveData.spirit_level) : 1;
         this.afflictionLevel = (typeof saveData.affliction_level === "number") ? Math.max(1, saveData.affliction_level) : 1;
         this.destructionLevel = (typeof saveData.destruction_level === "number") ? Math.max(1, saveData.destruction_level) : 1;

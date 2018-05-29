@@ -28,9 +28,9 @@ let RoomFactory = class RoomFactory{
     }
 
     static createInstance(name){
-        let room = RoomFactory.create(name);
-        room.roomID = ++RoomFactory.lastInstanceID;
-        return room;
+        let instance = RoomFactory.create(name);
+        instance.roomID = ++RoomFactory.lastInstanceID;
+        return instance;
     }
 
     static setRoomData(rows){
@@ -50,6 +50,7 @@ let RoomFactory = class RoomFactory{
     }
 };
 RoomFactory.roomData = {}; // populated from database;
-RoomFactory.lastInstanceID = 99;
+RoomFactory.INSTANCE_ID_START = 99;
+RoomFactory.lastInstanceID = RoomFactory.INSTANCE_ID_START;
 
 module.exports = RoomFactory;
