@@ -21,6 +21,9 @@ let Room = class Room extends EventEmitter{
 
     addNPCs(array, teamID, respawnable=true){
         for(let npc of array){
+            let originX = npc.x,
+                originY = npc.y;
+                
             npc.teamID = teamID;
         
             if(this.addObject(npc) && respawnable){
@@ -107,6 +110,29 @@ let Room = class Room extends EventEmitter{
             }
         });
         return null;
+    }
+
+    kill(){
+        for(let k in this.objects){
+            let obj = this.objects[k];
+            if(obj.type !== "player"){
+                obj.removeListeners();
+                obj = null;
+            }
+            delete this.objects[k];
+        }
+    }
+
+    get numSockets(){
+        let num = 0;
+        for(let k in this.sockets){
+            num++;
+        }
+        return num;
+    }
+
+    toString(){
+        return `Instance-${this.roomID}: '${this.roomName}'`;
     }
 };
 Room.NPC_RESPAWN_DELAY = 2 * 60 * 1000;

@@ -332,6 +332,22 @@ let DatabaseInquisitor = class DatabaseInquisitor{
         this.conn.query(
             `INSERT INTO maps VALUES(2, 'Northern Keep', 10, 0, 0)`,
             err => {}
+        );/*
+        this.conn.query(
+            `INSERT INTO maps VALUES(3, 'The Underground', 20, 0, 0)`,
+            err => {}
+        );
+        this.conn.query(
+            `INSERT INTO maps VALUES(4, 'Lost City', 30, 0, 0)`,
+            err => {}
+        );*/
+        this.conn.query(
+            `INSERT INTO maps VALUES(10, 'Graveyard', 1, 0, 0)`,
+            err => {}
+        );
+        this.conn.query(
+            `INSERT INTO maps VALUES(11, 'Asylum', 6, 0, 0)`,
+            err => {}
         );
     }
 

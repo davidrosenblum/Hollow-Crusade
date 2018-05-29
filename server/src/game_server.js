@@ -129,6 +129,10 @@ let processSocketData = function(socket, opc, data){
     else if(opc === OPC.PLAYER_SKIN_CHANGE){
         processPlayerSkinChange(socket, data.skinID || -1);
     }
+    else if(opc === OPC.INSTANCE_ENTER){
+        // use room change for exit
+        processInstanceEnter(socket, data.instanceID || -1, data.instanceName || "");
+    }
 };
 
 let processAuth = function(socket, version, udpPort){
@@ -256,19 +260,32 @@ let processCharacterSelect = function(socket, name){
         }
         else{
             createPlayer(socket, rows[0]);
-            processRoomChange(socket, rows[0].map_id);
+            processRoomChange(socket, socket.player.lastMapID);
         }
     });
 };
 
 let processRoomChange = function(socket, roomID){
-    let room = rooms[roomID] || rooms[DEFAULT_MAP];
+    let nextRoom = rooms[roomID] || rooms[DEFAULT_MAP];
 
     if(socket.room){
-        socket.room.removeSocket(socket);
+        let currRoom = socket.room;
+        currRoom.removeSocket(socket);
+
+        // leaving an instance?
+        if(currRoom.roomID >= RoomFactory.INSTANCE_ID_START){
+            // instance now empty?
+            if(currRoom.numSockets === 0){
+                console.log(`${currRoom} deleted.`);
+                currRoom.kill();
+                delete rooms[currRoom.roomID];
+                currRoom = null;   
+            }
+            else console.log(`${currRoom} still has members`);
+        }
     }
 
-    room.addSocket(socket);
+    nextRoom.addSocket(socket);
 };
 
 let processChat = function(socket, chat){
@@ -324,6 +341,31 @@ let processPlayerSkinChange = function(socket, skinID){
     else{
         send(socket, OPC.PLAYER_SKIN_CHANGE, "You are not in a room.", Status.BAD);
     }
+};
+
+let processInstanceEnter = function(socket, id=0, name=""){
+    let instance = null;
+    if(id >= RoomFactory.INSTANCE_ID_START){
+        instance = rooms[id] || null;
+    }
+    else if(typeof name === "string"){
+        try{
+            instance = createInstanceRoom(name);
+            console.log(`${instance} created.`);
+        }
+        catch(err){
+            send(socket, OPC.INSTANCE_ENTER, `Unable to create instance '${name}'.`, Status.BAD);
+            return;
+        }
+    }
+
+    if(instance){
+        processRoomChange(socket, instance.roomID);
+        return true;
+    }
+
+    send(socket, OPC.INSTANCE_ENTER, `Unable to find instance ${id}.`, Status.BAD);
+    return false;
 };
 
 let processCommand = function(socket, chat){
@@ -425,6 +467,18 @@ let processAdminCommand = function(socket, chat){
             sendChat(socket, `Cannot set '${attr}'.`);
         }
     }
+    else if(command === "instance"){
+        let attr = values[0] || null;
+        
+        if(!attr){
+            sendChat(socket, "Expected... instance <name>");
+            return;
+        }
+
+        if(!processInstanceEnter(socket, -1, attr)){
+            sendChat(socket, `Unable to create instance '${attr}'.`);
+        }
+    }
     else if(command === "kill"){
         room.deleteObject(values[0] || 0);
     }
@@ -485,7 +539,6 @@ let handleRoomAddSocket = function(evt){
     let room = evt.emitter,
         target = evt.target;
 
-    console.log(room);
     send(target, OPC.ROOM_CHANGE, {roomName: room.roomName, roomID: room.roomID, op: "join"});
 
     room.forEachObject(object => {
@@ -496,7 +549,10 @@ let handleRoomAddSocket = function(evt){
 
     sendRoomChat(room, `${target.player.name} connected.`);
 
-    database.updateCharacter({name: target.player.name, map_id: room.roomID});
+    if(room.roomID < RoomFactory.INSTANCE_ID_START){
+        target.player.lastMapID = room.roomID;
+        database.updateCharacter({name: target.player.name, map_id: room.roomID});
+    }
 };
 
 let handleRoomRemoveSocket = function(evt){
@@ -597,7 +653,7 @@ let createMapRoom = function(name){
 
 let createInstanceRoom = function(name){
     let instance = RoomFactory.createInstance(name);
-
+    
     instance.on(GameEvent.ROOM_ADD_SOCKET, handleRoomAddSocket);
     instance.on(GameEvent.ROOM_REMOVE_SOCKET, handleRoomRemoveSocket);
     instance.on(GameEvent.ROOM_ADD_OBJECT, handleRoomAddObject);

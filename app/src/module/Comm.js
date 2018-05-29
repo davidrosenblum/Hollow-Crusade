@@ -15,15 +15,17 @@ const OPC = {
     OBJECT_STATS:           14,
     FX_SPAWN:               15,
     PLAYER_SKIN_CHANGE:     16,
-    BATTLE_NODE_CREATE:     17,
-    BATTLE_NODE_DELETE:     18,
-    BATTLE_NODE_UPDATE:     19,
-    BATTLE_ENTER:           20,
-    BATTLE_EXIT:            21,
-    BATTLE_PLAYERS_TURN:    22,
-    BATTLE_CPU_TURN:        23,
-    BATTLE_SPELL_SELECT:    24,
-    BATTLE_SPELL_CAST:      25
+    INSTANCE_ENTER:         17,
+    INSTANCE_EXIT:          18,
+    BATTLE_NODE_CREATE:     19,
+    BATTLE_NODE_DELETE:     20,
+    BATTLE_NODE_UPDATE:     21,
+    BATTLE_ENTER:           22,
+    BATTLE_EXIT:            23,
+    BATTLE_PLAYERS_TURN:    24,
+    BATTLE_CPU_TURN:        25,
+    BATTLE_SPELL_SELECT:    26,
+    BATTLE_SPELL_CAST:      27
 };
 
 const Status = {
