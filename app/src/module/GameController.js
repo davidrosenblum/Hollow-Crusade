@@ -20,6 +20,7 @@ let GameController = class GameController extends dark.EventEmitter{
 
         this.player = null;
         this.targetObject = null;
+        this.updatePlayerMovementRef = null;
 
         this.mapLoaded = false;
 
@@ -40,6 +41,8 @@ let GameController = class GameController extends dark.EventEmitter{
         if(!mapData){
             throw new Error("Bad map!");
         }
+
+        console.log("Loading...")
 
         if(this.mapLoaded){
             this.unloadMap();
@@ -75,8 +78,8 @@ let GameController = class GameController extends dark.EventEmitter{
         this.mapBounds = new dark.Bounds(
             0,
             0,
-            mapData.scene[0].length * this.CELL_SIZE,
-            mapData.scene.length * this.CELL_SIZE
+            mapData.background[0].length * this.CELL_SIZE,
+            mapData.background.length * this.CELL_SIZE
         );
 
         this.scroller = new dark.Scroller([this.background, this.scene, this.foreground], this.mapBounds);
@@ -96,12 +99,15 @@ let GameController = class GameController extends dark.EventEmitter{
         window.dark = dark;
         window.game = this;
         //dark.stage.showHitboxes = true;
+
+        console.log("Loaded!");
     }
 
     unloadMap(){
         if(!this.mapLoaded){
             return;
         }
+        console.log("Unloading...");
 
         this.background.removeChildren();
         this.scene.removeChildren();
@@ -112,8 +118,12 @@ let GameController = class GameController extends dark.EventEmitter{
         this.scroller = null;
         this.objectManager.clearObjects();
 
+        this.releasePlayer();
+        this.targetObject = null;
+
         dark.kill();
         this.mapLoaded = false;
+        console.log("Unloaded!");
     }
 
     handleSelectTarget(evt){
@@ -224,13 +234,15 @@ let GameController = class GameController extends dark.EventEmitter{
         this.releasePlayer();
 
         this.player = object;
-        dark.stage.on(dark.Event.DRAW, this.updatePlayerMovement.bind(this));
+        this.updatePlayerMovementRef = this.updatePlayerMovement.bind(this);
+        dark.stage.on(dark.Event.DRAW, this.updatePlayerMovementRef);
     }
 
     releasePlayer(){
         if(this.player){
-            dark.stage.removeListener(dark.Event.DRAW, this.updatePlayerMovement.bind(this));
+            dark.stage.removeListener(dark.Event.DRAW, this.updatePlayerMovementRef);
             this.player = null;
+            this.updatePlayerMovementRef = null;
         }
     }
 };

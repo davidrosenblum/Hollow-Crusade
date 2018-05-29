@@ -16,7 +16,7 @@ let DatabaseInquisitor = require("./js/DatabaseInquisitor"),
 const VERSION = "0.1.0",
     CLIENT_VERSION = "0.1.0",
     MSG_DELIM = "?&?",
-    DEFAULT_ROOM = "main";
+    DEFAULT_ROOM = 1;
 
 const TEAM_ID_PLAYERS = 1,
     TEAM_ID_ENEMIES = 2,
@@ -26,7 +26,9 @@ let settings = null,
     database = null,
     sockets = {},
     accounts = {},
-    rooms = null,
+    rooms = {},
+    instances = {},
+    lastInstanceID = 100,
     lastSocketID = 0;
 
 net.Socket.prototype.toString = function(){
@@ -254,13 +256,13 @@ let processCharacterSelect = function(socket, name){
         }
         else{
             createPlayer(socket, rows[0]);
-            rooms[DEFAULT_ROOM].addSocket(socket);
+            processRoomChange(socket, rows[0].map_id);
         }
     });
 };
 
-let processRoomChange = function(socket, roomName){
-    let room = rooms[roomName] || rooms[DEFAULT_ROOM];
+let processRoomChange = function(socket, roomID){
+    let room = rooms[roomID] || rooms[DEFAULT_ROOM];
 
     if(socket.room){
         socket.room.removeSocket(socket);
@@ -375,6 +377,9 @@ let processAdminCommand = function(socket, chat){
         if(attr === "skin"){
             processPlayerSkinChange(socket, val);
         }
+        else if(attr === "map"){
+            processRoomChange(socket, val);
+        }
         else{
             sendChat(socket, `Cannot set '${attr}'.`);
         }
@@ -448,6 +453,8 @@ let handleRoomAddSocket = function(evt){
     room.addObject(target.player);
 
     sendRoomChat(room, `${target.player.name} connected.`);
+
+    database.updateCharacter({name: target.player.name, map_id: room.roomID});
 };
 
 let handleRoomRemoveSocket = function(evt){
@@ -532,18 +539,20 @@ let createPlayer = function(socket, saveData){
     });
 };
 
-let createRooms = function(){
-    rooms = {
-        "main": new Room(1, "main")
-    };
-
-    for(let room in rooms){
-        rooms[room].on(GameEvent.ROOM_ADD_SOCKET, handleRoomAddSocket);
-        rooms[room].on(GameEvent.ROOM_REMOVE_SOCKET, handleRoomRemoveSocket);
-        rooms[room].on(GameEvent.ROOM_ADD_OBJECT, handleRoomAddObject);
-        rooms[room].on(GameEvent.ROOM_REMOVE_OBJECT, handleRoomRemoveObject);
-        rooms[room].on(GameEvent.ROOM_UPDATE_OBJECT, handleRoomUpdateObject);
+let createRoom = function(id, name){
+    if(id in rooms){
+        return;
     }
+
+    let room = new Room(id, name);
+
+    room.on(GameEvent.ROOM_ADD_SOCKET, handleRoomAddSocket);
+    room.on(GameEvent.ROOM_REMOVE_SOCKET, handleRoomRemoveSocket);
+    room.on(GameEvent.ROOM_ADD_OBJECT, handleRoomAddObject);
+    room.on(GameEvent.ROOM_REMOVE_OBJECT, handleRoomRemoveObject);
+    room.on(GameEvent.ROOM_UPDATE_OBJECT, handleRoomUpdateObject);
+
+    rooms[id] = room;
 };
 
 let connectDB = function(callback){
@@ -563,12 +572,26 @@ let connectDB = function(callback){
 let loadDatabaseTables = function(callback){
     let checkDone = function(){
         numDone++;
-        if(numDone === 1){
+        if(numDone === 2){
             callback();
         }
     };
 
     let numDone = 0;
+
+    database.loadMaps((err, rows) => {
+        if(err){
+            console.log(err.message);
+            process.exit();
+        }
+        else{
+            for(let row of rows){
+                createRoom(row.map_id, row.name);
+            }
+            console.log(" - Maps loaded.");
+            checkDone();
+        }
+    });
 
     database.loadSkins((err, rows) => {
         if(err){
@@ -624,8 +647,6 @@ let init = function(){
             }
         });
     });
-
-    createRooms();
 };
 
 console.log("  ______________________");

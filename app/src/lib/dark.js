@@ -342,6 +342,10 @@ let dark = (function(){
         addChild(object){
             if(object instanceof DisplayObject){
                 if(!this.containsChild(object)){
+                    if(object.parent){
+                        object.parent.removeChild(object);
+                    }
+
                     object._parent = this;
                     this._drawList.push(object);
                     this._children[object._id] = object;
@@ -359,6 +363,10 @@ let dark = (function(){
         addChildAt(object, index){
             if(object instanceof DisplayObject){
                 if(!this.containsChild(object)){
+                    if(object.parent){
+                        object.parent.removeChild(object);
+                    }
+                    
                     let list = [];
 
                     for(let i = 0; i < this.numChildren; i++){
@@ -410,7 +418,8 @@ let dark = (function(){
 
         removeChildren(array){
             if(!array){
-                array = this._children;
+                this.forEachChild(child => child.remove());
+                return;
             }
 
             for(let object of array){

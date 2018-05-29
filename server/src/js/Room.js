@@ -2,11 +2,12 @@ let EventEmitter = require("./EventEmitter"),
     GameEvent = require("./GameEvent");
 
 let Room = class Room extends EventEmitter{
-    constructor(roomID, roomName){
+    constructor(roomID, roomName, minLevel=1){
         super();
 
         this.roomID = roomID;
         this.roomName = roomName;
+        this.minLevel = minLevel;
 
         this.sockets = {};
         this.objects = {};
