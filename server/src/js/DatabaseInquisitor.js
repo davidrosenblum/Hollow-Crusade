@@ -182,10 +182,77 @@ let DatabaseInquisitor = class DatabaseInquisitor{
         )   
     }
 
+    loadMaps(callback){
+        this.conn.query(
+            "SELECT * FROM maps",
+            callback
+        );
+    }
+
     loadSkins(callback){
         this.conn.query(
             "SELECT * FROM skins",
             callback
+        );
+    }
+
+    insertMaps(){
+        // {map_id, name, min_level}
+        this.conn.query(
+            `INSERT INTO maps VALUES(1, 'Titan''s Landing', 1)`,
+            err => {}
+        );
+        this.conn.query(
+            `INSERT INTO maps VALUES(2, 'Northern Keep', 5)`,
+            err => {}
+        );
+    }
+
+    insertSkins(){
+        // {skin_id, name, level, money, tokens, hp, mp, def_p, def_e, res_p, res_e, dmg_mult, crit_mod, crit_mult}
+        this.conn.query(
+            `INSERT INTO skins VALUES(1, 'Peasant 1', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)`,
+            err => {}
+        );
+        this.conn.query(
+            `INSERT INTO skins VALUES(2, 'Peasant 2', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)`,
+            err => {}
+        );
+        this.conn.query(
+            `INSERT INTO skins VALUES(3, 'Peasant 3', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)`,
+            err => {}
+        );
+        this.conn.query(
+            `INSERT INTO skins VALUES(4, 'Hunter', 5, 300, 0, 0, 5, 5, 0, 8, 0, 0, 2, 10)`,
+            err => {}
+        );
+        this.conn.query(
+            `INSERT INTO skins VALUES(5, 'Knight', 10, 1000, 0, 5, 5, 8, 4, 10, 5, 0, 3, 12)`,
+            err => {}
+        );
+        this.conn.query(
+            `INSERT INTO skins VALUES(6, 'Ranger', 15, 5000, 0, 10, 10, 10, 6, 12, 7, 5, 4, 15)`,
+            err => {}
+        );
+        this.conn.query(
+            `INSERT INTO skins VALUES(7, 'Templar', 20, 20000, 0, 15, 15, 12, 8, 15, 10, 8, 5, 18)`,
+            err => {}
+        );
+        this.conn.query(
+            `INSERT INTO skins VALUES(8, 'Phantom', 30, 75000, 1, 20, 20, 15, 10, 20, 15, 10, 6, 20)`,
+            err => {}
+        );
+        this.conn.query(
+            `INSERT INTO skins VALUES(9, 'Titan', 40, 200000, 3, 25, 25, 17, 12, 25, 20, 12, 8, 22)`,
+            err => {}
+        );
+        this.conn.query(
+            `INSERT INTO skins VALUES(10, 'Paragon', 50, 999999, 9, 30, 30, 20, 15, 30, 25, 15, 10, 25)`,
+            err => {}
+        );
+        this.conn.query(
+            `INSERT INTO skins VALUES(11, 'Incarnate', 50, 9000000, 50, 30, 30, 20, 15, 30, 25, 15, 10, 25)`,
+            err => {}
         );
     }
 
@@ -199,18 +266,14 @@ let DatabaseInquisitor = class DatabaseInquisitor{
                 status ENUM('enabled', 'disabled') NOT NULL DEFAULT 'enabled',
                 date_joined DATETIME NOT NULL DEFAULT NOW(),
                 PRIMARY KEY (account_id)
-            )`,
-            err => {
-                if(!err){
-
-                }
-            }
+            )`
         );
 
         this.conn.query(
-            `CREATE TABLE skins(
-                skin_id INT UNIQUE NOT NULL,
+            `CREATE TABLE IF NOT EXISTS skins(
+                skin_id INT AUTO_INCREMENT UNIQUE NOT NULL,
                 name VARCHAR(255) UNIQUE NOT NULL,
+                level TINYINT NOT NULL DEFAULT 1,
                 money INT NOT NULL DEFAULT 1,
                 tokens TINYINT NOT NULL DEFAULT 0,
                 health SMALLINT NOT NULL DEFAULT 0,
@@ -223,82 +286,23 @@ let DatabaseInquisitor = class DatabaseInquisitor{
                 critical_chance TINYINT NOT NULL DEFAULT 0,
                 critical_mult SMALLINT NOT NULL DEFAULT 0,
                 PRIMARY KEY (skin_id)
-            )`,
-            err => {
-                if(!err){
-                    this.conn.query(
-                        `INSERT INTO skins(skin_id, name, money)
-                        VALUES(
-                            1, 'Peasant 1', 0
-                        )`
-                    );
-
-                    this.conn.query(
-                        `INSERT INTO skins(skin_id, name, money)
-                        VALUES(
-                            2, 'Peasant 2', 0
-                        )`
-                    );
-
-                    this.conn.query(
-                        `INSERT INTO skins(skin_id, name, money)
-                        VALUES(
-                            3, 'Peasant 3', 0
-                        )`
-                    );
-
-                    this.conn.query(
-                        `INSERT INTO skins(skin_id, name, money, mana, defense_physical, resistance_physical, critical_chance, critical_mult)
-                        VALUES(
-                            4, 'Hunter', 500, 5, 5, 8, 2, 10
-                        )`
-                    );
-
-                    this.conn.query(
-                        `INSERT INTO skins(skin_id, name, money, health, defense_physical, defense_elemental, resistance_physical, resistance_elemental)
-                        VALUES(
-                            5, 'Knight', 1000, 15, 8, 3, 10, 8
-                        )`
-                    );
-
-                    this.conn.query(
-                        `INSERT INTO skins(skin_id, name, money, mana, defense_physical, defense_elemental, resistance_physical, resistance_elemental, critical_chance, critical_mult, damage_mult)
-                        VALUES(
-                            6, 'Ranger', 5000, 10, 10, 10, 8, 6, 4, 15, 5
-                        )`
-                    );
-
-                    this.conn.query(
-                        `INSERT INTO skins(skin_id, name, money, health, mana, defense_physical, defense_elemental, resistance_physical, resistance_elemental)
-                        VALUES(
-                            7, 'Templar', 7000, 20, 5, 10, 5, 15, 10
-                        )`
-                    );
-
-                    this.conn.query(
-                        `INSERT INTO skins(skin_id, name, money, tokens, health, mana, defense_physical, defense_elemental, resistance_physical, resistance_elemental, critical_chance, critical_mult, damage_mult)
-                        VALUES(
-                            8, 'Phantom', 15000, 3, 15, 15, 12, 12, 15, 10, 5, 20, 10
-                        )`
-                    );
-
-                    this.conn.query(
-                        `INSERT INTO skins(skin_id, name, money, tokens, health, mana, defense_physical, defense_elemental, resistance_physical, resistance_elemental, critical_chance, critical_mult, damage_mult)
-                        VALUES(
-                            9, 'Titan', 20000, 3, 25, 10, 12, 10, 20, 15, 2, 10, 5
-                        )`
-                    );
-
-                    this.conn.query(
-                        `INSERT INTO skins(skin_id, name, money, tokens, health, mana, defense_physical, defense_elemental, resistance_physical, resistance_elemental, critical_chance, critical_mult, damage_mult)
-                        VALUES(
-                            10, 'Death Knight', 99999, 9, 35, 20, 15, 15, 25, 20, 10, 30, 20
-                        )`
-                    );
-                }
-            }
+            )`
         );
 
+        this.insertSkins();
+
+
+        this.conn.query(
+            `CREATE TABLE IF NOT EXISTS maps(
+                map_id INT UNIQUE NOT NULL,
+                name VARCHAR(255) UNIQUE NOT NULL,
+                min_level TINYINT NOT NULL DEFAULT 1,
+                PRIMARY KEY (map_id)
+            )`
+        );
+
+        this.insertMaps();
+        
         this.conn.query(
             `CREATE TABLE IF NOT EXISTS characters(
                 character_id INT AUTO_INCREMENT UNIQUE NOT NULL,
@@ -310,6 +314,7 @@ let DatabaseInquisitor = class DatabaseInquisitor{
                 points TINYINT NOT NULL DEFAULT 0, 
                 tokens SMALLINT NOT NULL DEFAULT 0,
                 skin_id INT NOT NULL DEFAULT 1,
+                map_id INT NOT NULL DEFAULT 1,
                 spirit_level TINYINT NOT NULL DEFAULT 1,
                 affliction_level TINYINT NOT NULL DEFAULT 1,
                 destruction_level TINYINT NOT NULL DEFAULT 1,
@@ -318,7 +323,9 @@ let DatabaseInquisitor = class DatabaseInquisitor{
                 FOREIGN KEY (account_id) REFERENCES accounts(account_id)
                     ON DELETE CASCADE,
                 FOREIGN KEY (skin_id) REFERENCES skins(skin_id)
-                    ON DELETE RESTRICT
+                    ON DELETE RESTRICT,
+                FOREIGN KEY (map_id) REFERENCES maps(map_id)
+                    ON DELETE RESTRICT 
             )`
         );
 

@@ -1,7 +1,7 @@
 import MapObjects from "./MapObjects";
 
 const MapData = {
-    "main": {
+    "Titan's Landing": {
         backgroundTypes: [null, MapObjects.GrassTile, MapObjects.GrassDirtHorzTile, MapObjects.GrassDirtVertTile],
         sceneTypes: [null, MapObjects.WallTile, MapObjects.WallCornerLeftTile, MapObjects.WallCornerRightTile],
         foregroundTypes: [null, MapObjects.WallArchLeftTile, MapObjects.WallArchRightTile],
@@ -84,6 +84,21 @@ const MapData = {
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        ]
+    },
+
+    "Northern Keep": {
+        backgroundTypes: [null, MapObjects.GrassTile],
+        sceneTypes: [null],
+        foregroundTypes: [null],
+        background: [
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        ],
+        scene: [
+            []
+        ],
+        foreground: [
+            []
         ]
     },
 
