@@ -402,6 +402,7 @@ let dark = (function(){
         }
 
         removeChildAt(index){
+            console.log(index);
             if(index >= 0 && index < this.numChildren){
                 let child = this.getChildAt(index);
 
@@ -414,16 +415,27 @@ let dark = (function(){
 
                 return child;
             }
+            else console.warn(index);
         }
 
         removeChildren(array){
             if(!array){
-                this.forEachChild(child => child.remove());
-                return;
+                for(let i = 0; i < this.numChildren; i++){
+                    let child = this.getChildAt(i);
+                    child._parent = null;
+                    
+                    this.emit(new Event(Event.CHILD_REMOVE, child));
+                    this.emit(new Event(Event.REMOVE, this));
+                }
+
+                this._drawList = [];
+                this._children = {};
             }
 
-            for(let object of array){
-                this.removeChild(object);
+            else{
+                for(let object of array){
+                    this.removeChild(object);
+                }
             }
         }
 
@@ -1361,9 +1373,11 @@ let dark = (function(){
         }
 
         draw(){
-            this.emit(new Event(Event.DRAW));
-            this.clear();
-            this.drawChildren();
+            if(this.visible){
+                this.emit(new Event(Event.DRAW));
+                this.clear();
+                this.drawChildren();
+            }
         }
 
         clear(){
@@ -1632,6 +1646,8 @@ let dark = (function(){
 
         initialized = true;
         renderLoop();
+
+        dark.stage.visible = true;
 
         return true;
     };

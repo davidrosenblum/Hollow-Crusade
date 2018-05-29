@@ -196,14 +196,141 @@ let DatabaseInquisitor = class DatabaseInquisitor{
         );
     }
 
+    loadNPCs(callback){
+        this.conn.query(
+            `SELECT * FROM npcs`,
+            callback
+        );
+    }
+
+    createAccountsTable(){
+        this.conn.query(
+            `CREATE TABLE IF NOT EXISTS accounts(
+                account_id INT AUTO_INCREMENT UNIQUE NOT NULL,
+                username VARCHAR(255) UNIQUE NOT NULL,
+                password VARCHAR(255) NOT NULL,
+                access_level TINYINT NOT NULL DEFAULT 1,
+                status ENUM('enabled', 'disabled') NOT NULL DEFAULT 'enabled',
+                date_joined DATETIME NOT NULL DEFAULT NOW(),
+                PRIMARY KEY (account_id)
+            )`,
+            err => {if(err) console.log(err.message)}
+        );
+    }
+
+    createSaltsTable(){
+        this.conn.query(
+            `CREATE TABLE IF NOT EXISTS salts(
+                account_id INT UNIQUE NOT NULL,
+                salt VARCHAR(255) NOT NULL,
+                PRIMARY KEY(account_id, salt),
+                FOREIGN KEY (account_id) REFERENCES accounts(account_id)
+                    ON DELETE CASCADE
+            )`,
+            err => {if(err) console.log(err.message)}
+        );
+    }
+
+    createMapsTables(){
+        this.conn.query(
+            `CREATE TABLE IF NOT EXISTS maps(
+                map_id INT UNIQUE NOT NULL,
+                name VARCHAR(255) UNIQUE NOT NULL,
+                min_level TINYINT NOT NULL DEFAULT 1,
+                start_x FLOAT NOT NULL DEFAULT 0,
+                start_y FLOAT NOT NULL DEFAULT 0,
+                PRIMARY KEY (map_id)
+            )`,
+            err => {if(err) console.log(err.message)}
+        );
+    }
+
+    createSkinsTable(){
+        this.conn.query(
+            `CREATE TABLE IF NOT EXISTS skins(
+                skin_id INT AUTO_INCREMENT UNIQUE NOT NULL,
+                name VARCHAR(255) UNIQUE NOT NULL,
+                level TINYINT NOT NULL DEFAULT 1,
+                money INT NOT NULL DEFAULT 1,
+                tokens TINYINT NOT NULL DEFAULT 0,
+                health SMALLINT NOT NULL DEFAULT 0,
+                mana SMALLINT NOT NULL DEFAULT 0,
+                defense_physical TINYINT NOT NULL DEFAULT 0,
+                defense_elemental TINYINT NOT NULL DEFAULT 0,
+                resistance_physical TINYINT NOT NULL DEFAULT 0,
+                resistance_elemental TINYINT NOT NULL DEFAULT 0,
+                damage_mult SMALLINT NOT NULL DEFAULT 0, 
+                critical_chance TINYINT NOT NULL DEFAULT 0,
+                critical_mult SMALLINT NOT NULL DEFAULT 0,
+                PRIMARY KEY (skin_id)
+            )`,
+            err => {if(err) console.log(err.message)}
+        );
+    }
+
+    createNPCsTable(){
+        this.conn.query(
+            `CREATE TABLE IF NOT EXISTS npcs(
+                npc_id INT UNIQUE NOT NULL,
+                type VARCHAR(255) UNIQUE NOT NULL,
+                name VARCHAR(255) NOT NULL,
+                level TINYINT NOT NULL DEFAULT 0,
+                move_speed FLOAT NOT NULL DEFAULT 1,
+                health SMALLINT NOT NULL DEFAULT 1,
+                mana SMALLINT NOT NULL DEFAULT 1,
+                defense_physical TINYINT NOT NULL DEFAULT 0,
+                defense_elemental TINYINT NOT NULL DEFAULT 0,
+                resistance_physical TINYINT NOT NULL DEFAULT 0,
+                resistance_elemental TINYINT NOT NULL DEFAULT 0,
+                damage_mult SMALLINT NOT NULL DEFAULT 0,
+                crit_mod TINYINT NOT NULL DEFAULT 0,
+                crit_mult SMALLINT NOT NULL DEFAULT 0,
+                reward_xp INT NOT NULL DEFAULT 0,
+                reward_money INT NOT NULL DEFAULT 0,
+                reward_tokens iNT NOT NULL DEFAULT 0,
+                PRIMARY KEY (npc_id)
+            )`,
+            err => {if(err) console.log(err.message)}
+        );
+    }
+
+    createCharactersTable(){
+        this.conn.query(
+            `CREATE TABLE IF NOT EXISTS characters(
+                character_id INT AUTO_INCREMENT UNIQUE NOT NULL,
+                account_id INT NOT NULL,
+                name VARCHAR(255) UNIQUE NOT NULL,
+                level TINYINT NOT NULL DEFAULT 1,
+                xp FLOAT NOT NULL DEFAULT 0,
+                money INT NOT NULL DEFAULT 0,
+                points TINYINT NOT NULL DEFAULT 0, 
+                tokens SMALLINT NOT NULL DEFAULT 0,
+                skin_id INT NOT NULL DEFAULT 1,
+                map_id INT NOT NULL DEFAULT 1,
+                spirit_level TINYINT NOT NULL DEFAULT 1,
+                affliction_level TINYINT NOT NULL DEFAULT 1,
+                destruction_level TINYINT NOT NULL DEFAULT 1,
+                weapon_level TINYINT NOT NULL DEFAULT 1,
+                PRIMARY KEY (character_id),
+                FOREIGN KEY (account_id) REFERENCES accounts(account_id)
+                    ON DELETE CASCADE,
+                FOREIGN KEY (skin_id) REFERENCES skins(skin_id)
+                    ON DELETE RESTRICT,
+                FOREIGN KEY (map_id) REFERENCES maps(map_id)
+                    ON DELETE RESTRICT 
+            )`,
+            err => {if(err) console.log(err.message)}
+        );
+    }
+
     insertMaps(){
         // {map_id, name, min_level}
         this.conn.query(
-            `INSERT INTO maps VALUES(1, 'Titan''s Landing', 1)`,
+            `INSERT INTO maps VALUES(1, 'Titan''s Landing', 1, 0, 0)`,
             err => {}
         );
         this.conn.query(
-            `INSERT INTO maps VALUES(2, 'Northern Keep', 5)`,
+            `INSERT INTO maps VALUES(2, 'Northern Keep', 10, 0, 0)`,
             err => {}
         );
     }
@@ -256,88 +383,33 @@ let DatabaseInquisitor = class DatabaseInquisitor{
         );
     }
 
+    insertNPCs(){
+        // {id, type, name, lvl, speed, health, mana}
+        // {def_physical, def_element, res_physical, res_elemental}
+        // {dmg_mult, crit_mod, crit_mult}
+        // {reward_xp, reward_money, reward_tokens}
+        this.conn.query(
+            `INSERT INTO npcs VALUES(
+                1, 'grave-knight', 'Grave Knight', 0, 1, 50, 25, 
+                0, 0, 15, 10,
+                0, 0, 15,
+                25, 25, 0
+            )`,
+            err => {}
+        );
+    }
+
     createTables(){
-        this.conn.query(
-            `CREATE TABLE IF NOT EXISTS accounts(
-                account_id INT AUTO_INCREMENT UNIQUE NOT NULL,
-                username VARCHAR(255) UNIQUE NOT NULL,
-                password VARCHAR(255) NOT NULL,
-                access_level TINYINT NOT NULL DEFAULT 1,
-                status ENUM('enabled', 'disabled') NOT NULL DEFAULT 'enabled',
-                date_joined DATETIME NOT NULL DEFAULT NOW(),
-                PRIMARY KEY (account_id)
-            )`
-        );
-
-        this.conn.query(
-            `CREATE TABLE IF NOT EXISTS skins(
-                skin_id INT AUTO_INCREMENT UNIQUE NOT NULL,
-                name VARCHAR(255) UNIQUE NOT NULL,
-                level TINYINT NOT NULL DEFAULT 1,
-                money INT NOT NULL DEFAULT 1,
-                tokens TINYINT NOT NULL DEFAULT 0,
-                health SMALLINT NOT NULL DEFAULT 0,
-                mana SMALLINT NOT NULL DEFAULT 0,
-                defense_physical TINYINT NOT NULL DEFAULT 0,
-                defense_elemental TINYINT NOT NULL DEFAULT 0,
-                resistance_physical TINYINT NOT NULL DEFAULT 0,
-                resistance_elemental TINYINT NOT NULL DEFAULT 0,
-                damage_mult SMALLINT NOT NULL DEFAULT 0, 
-                critical_chance TINYINT NOT NULL DEFAULT 0,
-                critical_mult SMALLINT NOT NULL DEFAULT 0,
-                PRIMARY KEY (skin_id)
-            )`
-        );
-
-        this.insertSkins();
-
-
-        this.conn.query(
-            `CREATE TABLE IF NOT EXISTS maps(
-                map_id INT UNIQUE NOT NULL,
-                name VARCHAR(255) UNIQUE NOT NULL,
-                min_level TINYINT NOT NULL DEFAULT 1,
-                PRIMARY KEY (map_id)
-            )`
-        );
+        this.createAccountsTable();
+        this.createSaltsTable();
+        this.createMapsTables();
+        this.createNPCsTable();
+        this.createSkinsTable();
+        this.createCharactersTable();
 
         this.insertMaps();
-        
-        this.conn.query(
-            `CREATE TABLE IF NOT EXISTS characters(
-                character_id INT AUTO_INCREMENT UNIQUE NOT NULL,
-                account_id INT NOT NULL,
-                name VARCHAR(255) UNIQUE NOT NULL,
-                level TINYINT NOT NULL DEFAULT 1,
-                xp FLOAT NOT NULL DEFAULT 0,
-                money INT NOT NULL DEFAULT 0,
-                points TINYINT NOT NULL DEFAULT 0, 
-                tokens SMALLINT NOT NULL DEFAULT 0,
-                skin_id INT NOT NULL DEFAULT 1,
-                map_id INT NOT NULL DEFAULT 1,
-                spirit_level TINYINT NOT NULL DEFAULT 1,
-                affliction_level TINYINT NOT NULL DEFAULT 1,
-                destruction_level TINYINT NOT NULL DEFAULT 1,
-                weapon_level TINYINT NOT NULL DEFAULT 1,
-                PRIMARY KEY (character_id),
-                FOREIGN KEY (account_id) REFERENCES accounts(account_id)
-                    ON DELETE CASCADE,
-                FOREIGN KEY (skin_id) REFERENCES skins(skin_id)
-                    ON DELETE RESTRICT,
-                FOREIGN KEY (map_id) REFERENCES maps(map_id)
-                    ON DELETE RESTRICT 
-            )`
-        );
-
-        this.conn.query(
-            `CREATE TABLE IF NOT EXISTS salts(
-                account_id INT UNIQUE NOT NULL,
-                salt VARCHAR(255) NOT NULL,
-                PRIMARY KEY(account_id, salt),
-                FOREIGN KEY (account_id) REFERENCES accounts(account_id)
-                    ON DELETE CASCADE
-            )`
-        );
+        this.insertSkins();
+        this.insertNPCs();        
     }
 };
 

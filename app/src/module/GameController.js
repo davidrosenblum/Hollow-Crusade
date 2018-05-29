@@ -36,19 +36,17 @@ let GameController = class GameController extends dark.EventEmitter{
         dark.stage.addChild(this.foreground);
     }
 
-    loadMap(id){
-        let mapData = MapData.getMapData(id);
+    loadMap(name){
+        let mapData = MapData.getMapData(name);
         if(!mapData){
-            throw new Error("Bad map!");
+            throw new Error(`Bad map ${name}!`);
         }
 
-        console.log("Loading...")
+        dark.init("#canvas-container", this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
 
         if(this.mapLoaded){
             this.unloadMap();
         }
-
-        dark.init("#canvas-container", this.CANVAS_WIDTH, this.CANVAS_HEIGHT, this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
 
         dark.MapBuilder.buildGrid(
             mapData.background,
@@ -99,15 +97,14 @@ let GameController = class GameController extends dark.EventEmitter{
         window.dark = dark;
         window.game = this;
         //dark.stage.showHitboxes = true;
-
-        console.log("Loaded!");
     }
 
     unloadMap(){
         if(!this.mapLoaded){
             return;
         }
-        console.log("Unloading...");
+
+        //dark.kill();
 
         this.background.removeChildren();
         this.scene.removeChildren();
@@ -121,9 +118,7 @@ let GameController = class GameController extends dark.EventEmitter{
         this.releasePlayer();
         this.targetObject = null;
 
-        dark.kill();
         this.mapLoaded = false;
-        console.log("Unloaded!");
     }
 
     handleSelectTarget(evt){

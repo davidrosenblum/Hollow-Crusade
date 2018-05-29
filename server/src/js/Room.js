@@ -2,17 +2,35 @@ let EventEmitter = require("./EventEmitter"),
     GameEvent = require("./GameEvent");
 
 let Room = class Room extends EventEmitter{
-    constructor(roomID, roomName, minLevel=1){
+    constructor(roomID, roomName, minLevel=1, startLocX=0, startLocY=0){
         super();
 
         this.roomID = roomID;
         this.roomName = roomName;
         this.minLevel = minLevel;
+        this.startLocation = {
+            x: startLocX,
+            y: startLocY
+        };
 
         this.sockets = {};
         this.objects = {};
 
         this.lastObjectID = 0;
+    }
+
+    addNPCs(array, teamID, respawnable=true){
+        for(let npc of array){
+            npc.teamID = teamID;
+        
+            if(this.addObject(npc) && respawnable){
+                npc.on(GameEvent.UNIT_DEATH, evt => {
+                    setTimeout(() => {
+                        // ... respawn ...
+                    }, Room.NPC_RESPAWN_DELAY);
+                });
+            }
+        }
     }
 
     addSocket(socket){
@@ -37,6 +55,11 @@ let Room = class Room extends EventEmitter{
         if(object.objectID === -1){
             object.objectID = ++this.lastObjectID;
             this.objects[object.objectID] = object;
+
+            if(object.type === "player"){
+                object.x = this.startLocation.x;
+                object.y = this.startLocation.y;
+            }
 
             this.emit(new GameEvent(GameEvent.ROOM_ADD_OBJECT, object));
         }
@@ -86,5 +109,6 @@ let Room = class Room extends EventEmitter{
         return null;
     }
 };
+Room.NPC_RESPAWN_DELAY = 2 * 60 * 1000;
 
 module.exports = Room;
