@@ -1,9 +1,9 @@
 #hud-target{
     position: absolute;
-    left: 10px;
+    left: 10px; /* 35px to align with chat */
     top: 10px;
-    width: 300px;
-    max-width: 300px;
+    width: 250px;
+    max-width: 250px;
     min-height: 100px;
     background-image: linear-gradient(180deg, silver, gray);
     border: 1px solid black;

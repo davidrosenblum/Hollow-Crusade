@@ -19,6 +19,14 @@ let EventEmitter = class EventEmitter{
         }
     }
 
+    clearListeners(){
+        this._eventListeners = {};
+    }
+
+    removeListeners(eventType){
+        delete this._eventListeners[eventType];
+    }
+
     removeListener(eventType, listener){
         if(this.willTrigger(eventType)){
             for(let i = 0, fn; i < this._eventListeners[eventType].length; i++){

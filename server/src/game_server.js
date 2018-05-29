@@ -337,6 +337,8 @@ let processPlayerSkinChange = function(socket, skinID){
             skinID: socket.player.skinID
         };
         sendRoom(socket.room, OPC.PLAYER_SKIN_CHANGE, data, Status.GOOD);
+
+        database.updateCharacter(socket.player.getSaveData());
     }
     else{
         send(socket, OPC.PLAYER_SKIN_CHANGE, "You are not in a room.", Status.BAD);
@@ -384,7 +386,11 @@ let processCommand = function(socket, chat){
 
         if(attr === "map"){
             let room = socket.room;
-            sendChat(socket, `Map = (${room.roomID}) "${room.roomName}"`);
+            sendChat(socket, `Map = ${room.roomName} (id:${room.roomID})`);
+        }
+        else if(attr === "skin"){
+            let skin = PlayerSkins.getSkin(socket.player.skinID);
+            sendChat(socket, `Skin = ${skin.name} (id:${skin.skinID})`);
         }
         else if(attr === "name"){
             sendChat(socket, `Name = "${socket.player.name}"`);
@@ -439,6 +445,11 @@ let processAdminCommand = function(socket, chat){
         else if(attr === "tokens"){
             socket.player.addTokens(val || 0);
         }
+        else if(attr === "levels"){
+            for(let i = 0; i < Math.min(val, 49); i++){
+                socket.player.levelUp();
+            }
+        }
         else{
             sendChat(socket, `Cannot add '${attr}'`);
         }
@@ -480,7 +491,20 @@ let processAdminCommand = function(socket, chat){
         }
     }
     else if(command === "kill"){
-        room.deleteObject(values[0] || 0);
+        let val = values[0] || "";
+        
+        if(!val){
+            sendChat(socket, "Expected... kill <object_id>")
+            return;
+        }
+
+        let target = socket.room.getObject(val);
+        if(target){
+            target.takeDamageFrom(target.health, "no-resist", socket.player);
+        }
+        else{
+            sendChat(socket, `Target ID ${val} not found.`);
+        }
     }
     else if(command === "kick"){
         kickPlayer(room, values[0] || "");
@@ -570,6 +594,8 @@ let handleRoomAddObject = function(evt){
     let room = evt.emitter,
         object = evt.target;
 
+    object.on(GameEvent.UNIT_DEATH, handleObjectDeath.bind(room));
+
     room.forEachSocket(socket => {
         send(socket, OPC.OBJECT_CREATE, object.getSpawnData());
     });
@@ -582,6 +608,8 @@ let handleRoomRemoveObject = function(evt){
     room.forEachSocket(socket => {
         send(socket, OPC.OBJECT_DELETE, {objectID: object.objectID});
     });
+
+    object.removeListeners(GameEvent.UNIT_DEATH);
 };
 
 let handleRoomUpdateObject = function(evt){
@@ -597,6 +625,34 @@ let handleRoomUpdateObject = function(evt){
             socket.send(message, sock.udpPort);
         }
     });
+};
+
+let handleObjectDeath = function(evt){
+    // bind room!
+    let object = evt.emitter;
+    
+    this.removeObject(object.objectID);
+    
+    if(object.type === "player"){
+        // players get revived
+        sendRoomChat(this, `${object.name} died (rez at spawn in 5 seconds).`);
+        setTimeout(() => {
+            // prep for instance nullification and room change possibility
+            if(this !== null && sockets[object.ownerID].room === this){
+                object.health = object.healthCap * 0.25;
+                object.mana = object.manaCap * 0.25;
+
+                this.addObject(object);
+            }
+        }, 5000);
+
+        console.log("Timeout set....");
+    }
+    else{
+        // NPCs do not get rezed 
+        object.clearListeners();
+        object = null;
+    }
 };
 
 let createPlayer = function(socket, saveData){
@@ -625,13 +681,17 @@ let createPlayer = function(socket, saveData){
         processObjectStats(socket, socket.player.objectID);
     });
 
+    socket.player.on(GameEvent.PLAYER_POINTS, evt => {
+        sendChat(socket, `You gained ${evt.value} upgrade points.`);
+        database.updateCharacter(socket.player.getSaveData());
+
+        processObjectStats(socket, socket.player.objectID);
+    });
+
     socket.player.on(GameEvent.PLAYER_LEVEL_UP, evt => {
         sendChat(socket, `You reached level ${evt.value}!`);
 
         database.updateCharacter(socket.player.getSaveData());
-
-        socket.player.fillHealth();
-        socket.player.fillMana();
 
         processObjectStats(socket, socket.player.objectID);
     });

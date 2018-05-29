@@ -6,7 +6,7 @@ let PlayerSkins = class PlayerSkins{
                 name:                   row.name,
                 health:                 row.health,
                 mana:                   row.mana,
-                defensePhysical:        row.defensePhysical / 100,
+                defensePhysical:        row.defense_physical / 100,
                 defenseElemental:       row.defense_elemental / 100,
                 resistancePhysical:     row.resistance_physical / 100,
                 resistanceElemental:    row.resistance_elemental / 100,
