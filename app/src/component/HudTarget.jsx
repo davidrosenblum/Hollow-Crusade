@@ -5,17 +5,25 @@ import './HudTarget.css';
 class HudTarget extends React.Component{
     constructor(props){
         super(props);
+
+        this.state = {
+            targetData: props.targetData
+        };
+    }
+
+    componentWillReceiveProps(props){
+        this.setState({targetData: props.targetData});
     }
 
     extractTargetData(){
-        let data = this.props.targetData || null;
+        let data = this.state.targetData || null;
         if(!data){
             return null;
         }
 
         return {
             name:       data.name,
-            lvl:        `(${data.level})` || "",
+            lvl:        (typeof data.level === "number") ? ` (${data.level})` : "",
             hp:         parseFloat(data.health || 0).toFixed(1),
             hpCap:      parseFloat(data.healthCap || 0).toFixed(1),
             mp:         parseFloat(data.mana || 0).toFixed(1),
@@ -28,6 +36,10 @@ class HudTarget extends React.Component{
             critMod:    (data.criticalModifier * 100).toFixed(0),
             critMult:   (data.criticalMultiplier * 100).toFixed(0)
         };
+    }
+
+    close(evt){
+        this.setState({targetData: null});
     }
 
     render(){
@@ -70,6 +82,9 @@ class HudTarget extends React.Component{
                             </tr>
                         </tbody>
                     </table>
+                </div>
+                <div>
+                    <button id="hud-target-close" onClick={this.close.bind(this)}>&times;</button>
                 </div>
             </div>
         );

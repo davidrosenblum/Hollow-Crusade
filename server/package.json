@@ -1,8 +1,10 @@
 {
   "scripts": {
-    "start": "pm2 start src/game_server.js && pm2 start src/web_server.js",
-    "web-test": "nodemon src/web_server.js",
-    "game-test": "nodemon src/game_server.js"
+    "start": "pm2 start src/GameServer.js && pm2 start src/WebServer.js",
+    "web-test": "nodemon src/WebServer.js",
+    "game-test": "nodemon src/GameServer.js",
+    "web": "node src/WebServer.js",
+    "game": "node src/GameServer.js"
   },
   "dependencies": {
     "dgram": "^1.0.1",

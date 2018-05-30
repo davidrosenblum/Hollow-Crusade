@@ -123,6 +123,9 @@ let Client = class Client{
         else if(opc === OPC.OBJECT_DELETE){
             GameController.deleteObject(data.objectID || -1);
         }
+        else if(opc === OPC.OBJECT_UPDATE){
+            GameController.updateObject(data);
+        }
         else if(opc === OPC.OBJECT_STATS){
             this.handleObjectStats(data, status);
         }
@@ -131,6 +134,18 @@ let Client = class Client{
         }
         else if(opc === OPC.PLAYER_SKIN_CHANGE){
             this.handlePlayerSkinChange(data, status);
+        }
+        else if(opc === OPC.BATTLE_ENTER){
+            this.handleBattleEnter(data, status);
+        }
+        else if(opc === OPC.BATTLE_EXIT){
+            this.handleBattleExit(data, status);
+        }
+        else if(opc === OPC.BATTLE_NODE_CREATE){
+            this.handleBattleCreate(data, status);
+        }
+        else if(opc === OPC.BATTLE_NODE_DELETE){
+            this.handleBattleDelete(data, status);
         }
     }
 
@@ -224,6 +239,33 @@ let Client = class Client{
         }
         else if(data.message){
             UIController.hudChat(data.message);
+        }
+    }
+
+    handleBattleEnter(data, status){
+        if(status === Status.GOOD){
+            GameController.enterBattle();
+        }
+        else{
+            GameController.inBattle = false;
+        }
+    }
+
+    handleBattleExit(data, status){
+        if(status === Status.GOOD){
+            GameController.inBattle = false;
+        }
+    }
+
+    handleBattleCreate(data, status){
+        if(status === Status.GOOD){
+            GameController.createBattleNode(data);
+        }
+    }
+
+    handleBattleDelete(data, status){
+        if(status === Status.GOOD){
+            GameController.deleteBattleNode(data.nodeID);
         }
     }
 

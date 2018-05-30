@@ -1,7 +1,7 @@
 let NPC = require("./NPC");
 
 let NPCFactory = class NPCFactory{
-    static create(type, x, y, teamID, ownerID, customName=null){
+    static create(type, x, y, ownerID, teamID, customName=null){
         let data = NPCFactory.getNPCData(type);
         if(data){
             let npc = new NPC(data);
@@ -31,13 +31,13 @@ let NPCFactory = class NPCFactory{
                 moveSpeed:              row.move_speed,
                 health:                 row.health,
                 mana:                   row.mana,
-                defensePhysical:        row.defense_physical,
-                defenseElemental:       row.defense_elemental,
-                resistancePhysical:     row.resistance_physical,
-                resistanceElemental:    row.resistance_elemental,
-                damageMultiplier:       row.damage_mult,
+                defensePhysical:        1 + (row.defense_physical / 100),
+                defenseElemental:       1 + (row.defense_elemental),
+                resistancePhysical:     1 + (row.resistance_physical / 100),
+                resistanceElemental:    1 + (row.resistance_elemental / 100),
+                damageMultiplier:       1 + (row.damage_mult / 100),
                 criticalModifier:       row.crit_mod,
-                criticalMultiplier:     row.crit_mult,
+                criticalMultiplier:     1 + (row.crit_mult / 100),
                 xpReward:               row.reward_xp,
                 moneyReward:            row.reward_money,
                 tokensReward:           row.reward_tokens

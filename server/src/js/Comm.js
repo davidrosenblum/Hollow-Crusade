@@ -1,3 +1,4 @@
+// op codes enum
 const OPC = {
     AUTH:                   1,
     LOGIN:                  2,
@@ -28,13 +29,48 @@ const OPC = {
     BATTLE_SPELL_CAST:      27
 };
 
+// status codes enum
 const Status = {
     GOOD:   2,
     BAD:    4,
     ERR:    5
 };
 
+// team IDs enum
+const Teams = {
+    PLAYERS: 1,
+    ENEMIES: 2,
+    NEUTRALS: 3
+};
+
+// static owner IDs enum
+const Owners = {
+    ENEMIES: 1,
+    FRIENDS: 2,
+    PLAYERS_START: 5
+};
+
+// static combat object IDs enum
+const CombatObjects = {
+    PLAYER: "player",
+    SKELETON: "skeleton",
+    ANIMUS: "animus",
+    SKELETON_WARRIOR: "skeleton-warrior",
+    ABERRATION: "aberration",
+    NECROMANCER: "necromancer",
+    GARGOYLE: "gargoyle",
+    GRAVE_KNIGHT: "grave-knight",
+    INFERNAL_BEHEMOTH: "infernal-behemoth",
+    DEATH_KNIGHT: "death-knight",
+    CONSUMED_PARAGON: "consumed-paragon",
+    FALLEN_CRUSADER: "fallen-crusader",
+    MEEHAN: "meehan"
+};
+
 module.exports = {
     Status: Status,
-    OPC: OPC
+    OPC: OPC,
+    Teams: Teams,
+    Owners: Owners,
+    CombatObjects: CombatObjects
 };

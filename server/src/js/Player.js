@@ -85,11 +85,6 @@ let Player = class Player extends GameCombatObject{
         this.fillMana();
     }
 
-    restore(){
-        this.fillHealth();
-        this.fillMana();
-    }
-
     fillHealth(){
         this.health = this.healthCap;
     }
@@ -99,7 +94,7 @@ let Player = class Player extends GameCombatObject{
     }
 
     addXP(xp){
-        if(this.level === Player.LEVEL_CAP){
+        if(xp === 0 || this.level === Player.LEVEL_CAP){
             return;
         }
 
@@ -121,7 +116,7 @@ let Player = class Player extends GameCombatObject{
     }
 
     addMoney(amount){
-        if(this.money < Player.MAX_MONEY){
+        if(amount > 0 && this.money < Player.MAX_MONEY){
             this.money = Math.min(this.money + amount, Player.MAX_MONEY);
             this.emit(new GameEvent(GameEvent.PLAYER_MONEY, null, amount));  
         }
@@ -138,7 +133,7 @@ let Player = class Player extends GameCombatObject{
     }
 
     addPoints(amount){
-        if(this.points < Player.MAX_POINTS){
+        if(amount > 0 && this.points < Player.MAX_POINTS){
             this.points = Math.min(this.points + amount, Player.MAX_POINTS);
             this.emit(new GameEvent(GameEvent.PLAYER_POINTS, null, amount));  
         }
@@ -155,7 +150,7 @@ let Player = class Player extends GameCombatObject{
     }
 
     addTokens(amount){
-        if(this.tokens < Player.MAX_TOKENS){
+        if(amount > 0 && this.tokens < Player.MAX_TOKENS){
             this.tokens = Math.min(this.tokens + amount, Player.MAX_TOKENS);
             this.emit(new GameEvent(GameEvent.PLAYER_TOKENS, null, amount));  
         }

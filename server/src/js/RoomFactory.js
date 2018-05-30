@@ -1,4 +1,7 @@
-let Room = require("./Room");
+let Room = require("./Room"),
+    CombatObjects = require("./Comm").CombatObjects,
+    Owners = require("./Comm").Owners,
+    Teams = require("./Comm").Teams;
 
 /*
     NOTE:
@@ -22,6 +25,8 @@ let RoomFactory = class RoomFactory{
                 roomData.startY
             );
 
+            RoomFactory.populateRoom(room);
+
             return room;
         }
         else throw new Error(`Room '${name}' does not exist.`);
@@ -31,6 +36,35 @@ let RoomFactory = class RoomFactory{
         let instance = RoomFactory.create(name);
         instance.roomID = ++RoomFactory.lastInstanceID;
         return instance;
+    }
+
+    static populateRoom(room){
+        if(room.roomName === "Graveyard"){
+            room.createBattleNode(96*5, 96*2,
+                [
+                    CombatObjects.SKELETON, CombatObjects.SKELETON, CombatObjects.ANIMUS, CombatObjects.SKELETON,
+                    CombatObjects.SKELETON
+                ]
+            );
+            room.createBattleNode(96*2, 96*4,
+                [
+                    CombatObjects.SKELETON, CombatObjects.SKELETON, CombatObjects.ANIMUS, CombatObjects.SKELETON,
+                    CombatObjects.SKELETON_WARRIOR, CombatObjects.ANIMUS, CombatObjects.SKELETON
+                ]
+            );
+            room.createBattleNode(96*7, 96*3,
+                [
+                    CombatObjects.SKELETON, CombatObjects.ANIMUS, CombatObjects.SKELETON_WARRIOR, CombatObjects.ABERRATION
+                ]
+            );
+        } 
+        else if(room.roomName === "Asylum"){
+            room.createBattleNode(96*5, 96*2,
+                [
+                    CombatObjects.ANIMUS, CombatObjects.SKELETON_WARRIOR, CombatObjects.ANIMUS, CombatObjects.SKELETON_WARRIOR
+                ]
+            );
+        }
     }
 
     static setRoomData(rows){

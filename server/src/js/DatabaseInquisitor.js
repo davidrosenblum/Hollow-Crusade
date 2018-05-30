@@ -133,7 +133,10 @@ let DatabaseInquisitor = class DatabaseInquisitor{
 
     retrieveCharacterList(username, callback){
         this.conn.query(
-            `SELECT name, level, skin_id FROM characters
+            `SELECT c.name, c.level, c.skin_id, m.name AS 'map_name'
+            FROM characters c
+            JOIN maps m
+            ON c.map_id = m.map_id
             WHERE account_id = (
                SELECT account_id FROM accounts
                WHERE username = '${username}' 
@@ -326,11 +329,11 @@ let DatabaseInquisitor = class DatabaseInquisitor{
     insertMaps(){
         // {map_id, name, min_level}
         this.conn.query(
-            `INSERT INTO maps VALUES(1, 'Titan''s Landing', 1, 0, 0)`,
+            `INSERT INTO maps VALUES(1, 'Titan''s Landing', 1, 100, 100)`,
             err => {}
         );
         this.conn.query(
-            `INSERT INTO maps VALUES(2, 'Northern Keep', 10, 0, 0)`,
+            `INSERT INTO maps VALUES(2, 'Northern Keep', 10, 100, 100)`,
             err => {}
         );/*
         this.conn.query(
@@ -342,11 +345,11 @@ let DatabaseInquisitor = class DatabaseInquisitor{
             err => {}
         );*/
         this.conn.query(
-            `INSERT INTO maps VALUES(10, 'Graveyard', 1, 0, 0)`,
+            `INSERT INTO maps VALUES(10, 'Graveyard', 1, 100, 100)`,
             err => {}
         );
         this.conn.query(
-            `INSERT INTO maps VALUES(11, 'Asylum', 6, 0, 0)`,
+            `INSERT INTO maps VALUES(11, 'Asylum', 6, 100, 100)`,
             err => {}
         );
     }
@@ -406,10 +409,109 @@ let DatabaseInquisitor = class DatabaseInquisitor{
         // {reward_xp, reward_money, reward_tokens}
         this.conn.query(
             `INSERT INTO npcs VALUES(
-                1, 'grave-knight', 'Grave Knight', 0, 1, 50, 25, 
-                0, 0, 15, 10,
+                1, 'skeleton', 'Skeleton', 1, 1, 6, 10, 
+                0, 0, 0, 0,
+                0, 0, 0,
+                12, 2, 0
+            )`,
+            err => {}
+        );
+        this.conn.query(
+            `INSERT INTO npcs VALUES(
+                2, 'animus', 'Animus', 2, 1, 12, 15, 
+                0, 0, 0, 0,
+                0, 0, 0,
+                20, 6, 0
+            )`,
+            err => {}
+        );
+        this.conn.query(
+            `INSERT INTO npcs VALUES(
+                3, 'skeleton-warrior', 'Skeleton Warrior', 3, 1, 20, 20, 
+                0, 0, 5, 0,
+                0, 0, 0,
+                30, 12, 0
+            )`,
+            err => {}
+        );
+        this.conn.query(
+            `INSERT INTO npcs VALUES(
+                4, 'aberration', 'Aberration', 4, 1, 30, 30, 
+                0, 0, 10, 0,
+                0, 0, 0,
+                42, 20, 0
+            )`,
+            err => {}
+        );
+        this.conn.query(
+            `INSERT INTO npcs VALUES(
+                5, 'necromancer', 'Necromancer', 5, 1, 42, 45, 
+                0, 10, 0, 5,
+                0, 0, 0,
+                56, 30, 0
+            )`,
+            err => {}
+        );
+        this.conn.query(
+            `INSERT INTO npcs VALUES(
+                6, 'gargoyle', 'Gargoyle', 6, 1, 56, 60, 
+                5, 0, 10, 0,
+                0, 0, 0,
+                72, 42, 0
+            )`,
+            err => {}
+        );
+        this.conn.query(
+            `INSERT INTO npcs VALUES(
+                7, 'grave-knight', 'Grave Knight', 7, 1, 72, 75, 
+                5, 5, 15, 10,
                 0, 0, 15,
-                25, 25, 0
+                60, 56, 0
+            )`,
+            err => {}
+        );
+        this.conn.query(
+            `INSERT INTO npcs VALUES(
+                8, 'infernal-behemoth', 'Infernal Behemoth', 8, 1, 90, 90, 
+                5, 5, 15, 20,
+                10, 5, 5,
+                90, 72, 0
+            )`,
+            err => {}
+        );
+        this.conn.query(
+            `INSERT INTO npcs VALUES(
+                9, 'death-knight', 'Death Knight', 9, 1, 110, 110, 
+                5, 5, 20, 15,
+                15, 5, 5,
+                132, 90, 0
+            )`,
+            err => {}
+        );
+        this.conn.query(
+            `INSERT INTO npcs VALUES(
+                10, 'consumed-paragon', 'Consumed Paragon', 10, 1, 156, 160, 
+                5, 5, 25, 20,
+                15, 5, 10,
+                182, 132, 0
+            )`,
+            err => {}
+        );
+        this.conn.query(
+            `INSERT INTO npcs VALUES(
+                20, 'fallen-crusader', 'Fallen Crusader', 0, 1, 1260, 1260, 
+                5, 5, 25, 25,
+                20, 10, 20,
+                1000, 900, 0
+            )`,
+            err => {}
+        );
+        this.conn.query(
+            `INSERT INTO npcs VALUES(
+                30, 'meehan', 'Meehan', 0, 1, 200, 200, 
+                0, 0, 15, 10,
+                10, 10, 5,
+                250, 200, 0
             )`,
             err => {}
         );

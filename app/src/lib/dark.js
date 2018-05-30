@@ -21,6 +21,7 @@ let dark = (function(){
         }
     };
     Event.ADD = "add";
+    Event.ANIM_DONE = "anim-done";
     Event.CHILD_ADD = "child-add";
     Event.CHILD_REMOVE = "child-remove";
     Event.CLICK = "click";
@@ -703,6 +704,16 @@ let dark = (function(){
             }
         }
 
+        updateAnim(){
+            if(this._currAnim){
+                this.nextFrame();
+
+                if(this.currFrame === 0){
+                    this.emit(new Event(Event.ANIM_DONE));
+                }
+            }
+        }
+
         nextFrame(){
             this._currFrame++;
 
@@ -732,7 +743,7 @@ let dark = (function(){
         playAnimation(name){
             if(name in this._animations && this._currAnim !== name){
                 this._currAnim = name;
-                this._currFrame = 0;
+                this.gotoAndPlay(0);
             }
         }
 
@@ -740,7 +751,10 @@ let dark = (function(){
             this._animations[name] = [];
 
             for(let frame of frames){
-                this._animations[name].push(frame);
+                if(frame instanceof AnimationFrameData){
+                    this._animations[name].push(frame);
+                }
+                else throw new Error("Frames argument must be of type Array<AnimationFrameData>.");
             }
         }
 
@@ -1204,6 +1218,40 @@ let dark = (function(){
         }
     };
 
+    let AnimationFrameData = class AnimationFrameData{
+        constructor(clipX, clipY, clipWidth, clipHeight){
+            this.clipX = clipX;
+            this.clipY = clipY;
+            this.clipWidth = clipWidth;
+            this.clipHeight = clipHeight;
+        }
+
+        static createFrames(options){
+            if(!options) throw new Error("Animation options required.");
+
+            let offsetX = (typeof options.offsetX === "number") ? options.offsetX : 0,
+                offsetY = (typeof options.offsetY === "number") ? options.offsetY : 0,
+                marginX = (typeof options.marginX === "number") ? options.marginX : 0,
+                marginY = (typeof options.marginY === "number") ? options.marginY : 0,
+                intervalX = (typeof options.intervalX === "number") ? options.intervalX : 0,
+                intervalY = (typeof options.intervalY === "number") ? options.intervalY : 0,
+                width = (typeof options.width === "number") ? options.width : 0,
+                height = (typeof options.height === "number") ? options.height : 0,
+                frameCount = (typeof options.frameCount === "number") ? options.frameCount : 1;
+
+            let frames = [];
+            for(let i = 0; i < frameCount; i++){
+                frames.push(new AnimationFrameData(
+                    (i * intervalX + marginX) + offsetX,
+                    (i * intervalY + marginY) + offsetY,
+                    width,
+                    height
+                ));
+            }
+            return frames;
+        }
+    };
+
     let SoundManager = class SoundManager{
         static playSound(url){
             if(url in SoundManager.IGNORE_SOUNDS === false){
@@ -1485,6 +1533,22 @@ let dark = (function(){
             }
         }
 
+        set nametagFont(font){
+            if(this._nameTag){
+                this._nameTag.font = font;
+            }
+        }
+
+        get nametagFont(){
+            return (this._nameTag) ? this._nameTag.font : null;
+        }
+
+        set nametagFill(fill){
+            if(this._nameTag){
+                this._nameTag.fillStyle = fill;
+            }
+        }
+
         setSound(name, url){
             this._sounds[name] = url;
         }
@@ -1699,6 +1763,7 @@ let dark = (function(){
         init: init,
         kill: kill,
         stage: stage,
+        AnimationFrameData: AnimationFrameData,
         AnimatedSprite: AnimatedSprite,
         AssetManager: AssetManager,
         Bounds: Bounds,

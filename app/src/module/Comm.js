@@ -1,3 +1,4 @@
+// op codes enum
 const OPC = {
     AUTH:                   1,
     LOGIN:                  2,
@@ -28,10 +29,24 @@ const OPC = {
     BATTLE_SPELL_CAST:      27
 };
 
+// status codes enum
 const Status = {
     GOOD:   2,
     BAD:    4,
     ERR:    5
 };
 
-export { OPC, Status };
+// team IDs enum
+const Teams = {
+    PLAYERS: 1,
+    ENEMIES: 2,
+    NEUTRALS: 3
+};
+
+// static owner IDs enum
+const Owners = {
+    ENEMIES: 1,
+    FRIENDS: 2
+};
+
+export { OPC, Status, Teams, Owners };

@@ -3,6 +3,8 @@ import MapData from './MapData';
 import GameObjects from './GameObjects';
 import Client from './Client';
 import RequestSender from './RequestSender';
+import UIController from './UIController';
+import { Teams } from './Comm';
 
 let GameController = class GameController extends dark.EventEmitter{
     constructor(){
@@ -23,13 +25,15 @@ let GameController = class GameController extends dark.EventEmitter{
         this.updatePlayerMovementRef = null;
 
         this.mapLoaded = false;
-
+        this.inBattle = false;
+        this.battleNodes = {};
+        
         this.CELL_SIZE = 96;
         this.CANVAS_WIDTH = 1280;
         this.CANVAS_HEIGHT = 720;
 
-        dark.TextField.DEFAULT_FONT = "18px arial";
-        dark.GameObject.NAMETAG_FONT = "16px arial";
+        dark.TextField.DEFAULT_FONT = "1em arial";
+        dark.GameObject.NAMETAG_FONT = "1em arial";
 
         dark.stage.addChild(this.background);
         dark.stage.addChild(this.scene);
@@ -92,6 +96,7 @@ let GameController = class GameController extends dark.EventEmitter{
         this.scene.depthSort();
 
         this.mapLoaded = true;
+        this.inBattle = false;
 
         /* remove this later... */
         window.dark = dark;
@@ -126,13 +131,34 @@ let GameController = class GameController extends dark.EventEmitter{
         this.releasePlayer();
         this.targetObject = null;
 
+        this.inBattle = false;
+        this.battleNodes = {};
+
+        UIController.hudTarget(null);
+
         this.mapLoaded = false;
     }
 
+    enterBattle(){
+        this.inBattle = true;
+        this.clearTarget();
+        this.scroller.lookAt(this.player);
+        // UIController.showBattle...? 
+    }
+
     handleSelectTarget(evt){
+        if(this.inBattle){
+            return;
+        }
+
         let target = evt.target;
         this.targetObject = evt.target;
         RequestSender.objectStats(target.objectID || -1);
+    }
+
+    clearTarget(){
+        UIController.hudTarget(null);
+        this.targetObject = null;
     }
 
     // converts 'my-object-type' to 'MyObjectType'
@@ -149,7 +175,8 @@ let GameController = class GameController extends dark.EventEmitter{
     }
 
     createObject(data){
-        let objectClass = GameObjects.getClass(this.formatClassNameString(data.type));
+        let classType = this.formatClassNameString(data.type),
+            objectClass = GameObjects.getClass(classType);
 
         if(objectClass){
             let object = new objectClass();
@@ -164,6 +191,13 @@ let GameController = class GameController extends dark.EventEmitter{
                 object.nametag(data.name);
             }
 
+            if(object.teamID === Teams.ENEMIES){
+                object.nametagFill = "darkred";
+            }
+            else if(object.teamID === Teams.PLAYERS){
+                object.nametagFill = "orange";
+            }
+
             if(data.type === "player"){
                 // players have skins
                 if(typeof data.skinID === "number"){
@@ -175,6 +209,8 @@ let GameController = class GameController extends dark.EventEmitter{
                     console.log("player found!");
                     this.setPlayer(object);
                     RequestSender.objectStats(object.objectID);
+                    
+                    object.nametagFill = "white";
                 }
             }
 
@@ -185,6 +221,7 @@ let GameController = class GameController extends dark.EventEmitter{
                 object.on(dark.Event.CLICK, this.handleSelectTarget.bind(this));
             }
         }
+        else throw new Error(`Unable to create object of type ${classType}.`);
     }
 
     deleteObject(id){
@@ -197,6 +234,40 @@ let GameController = class GameController extends dark.EventEmitter{
 
     updateObject(data){
         this.objectManager.updateObject(data);
+
+        // Client doesnt recieve this unless server moved the player
+        if(this.player && data.objectID === this.player.objectID){
+            this.scroller.lookAt(this.player);
+        }
+    }
+
+    createBattleNode(data){
+
+        let type = GameObjects.getClass("BattleNode");
+
+        let node = new type();
+        this.battleNodes[data.nodeID] = node;
+        
+        node.x = data.x + (this.CELL_SIZE * 2) - (node.width / 2);
+        node.y = data.y - this.CELL_SIZE;
+        node.nodeID = data.nodeID;
+        node.type = "battle-node";
+
+        node.on(dark.Event.CLICK, evt => {
+            if(!this.inBattle){
+                RequestSender.battleEnter(node.nodeID);
+            }
+        });
+
+        this.foreground.addChild(node);
+    }
+
+    deleteBattleNode(nodeID){
+        let node = this.battleNodes[nodeID];
+        if(node){
+            this.foreground.removeChild(node);
+            delete this.battleNodes[nodeID];
+        }
     }
 
     updatePlayerSkin(objectID, skinID){
@@ -207,7 +278,7 @@ let GameController = class GameController extends dark.EventEmitter{
     }
 
     updatePlayerMovement(evt){
-        if(this.keyHandler.numKeys > 0 && (document.activeElement instanceof window.HTMLInputElement === false)){
+        if(this.keyHandler.numKeys > 0 && (document.activeElement instanceof window.HTMLInputElement === false) && !this.inBattle){
             if(this.keyHandler.isKeyDown(87)){
                 this.player.moveUp(this.collidables, this.mapBounds, this.scroller);
                 this.playerUpdated();
@@ -227,7 +298,6 @@ let GameController = class GameController extends dark.EventEmitter{
             }
         }
     }
-
     playerUpdated(){
         RequestSender.objectUpdate(this.player.getData());
         this.scene.depthSort();
