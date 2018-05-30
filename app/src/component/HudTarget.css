@@ -22,3 +22,19 @@
 #hud-target table tr:nth-child(1){
     text-align: center;
 }
+
+#hud-target-close{
+    border: none;
+    background-color: transparent;
+    width: 25px;
+    font-weight: bold;
+    transition: 0.5s;
+}
+
+#hud-target-close:hover{
+    color: white;
+}
+
+#hud-target-close:focus{
+    outline: none;
+}

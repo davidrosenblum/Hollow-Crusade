@@ -53,6 +53,14 @@ let RequestSender = class RequestSender{
     static objectStats(id){
         Client.send(OPC.OBJECT_STATS, {objectID: id});
     }
+
+    static battleEnter(id){
+        Client.send(OPC.BATTLE_ENTER, {nodeID: id});
+    }
+
+    static battleExit(){
+        Client.send(OPC.BATTLE_EXIT);
+    }
 };
 
 export default RequestSender;

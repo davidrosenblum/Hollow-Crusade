@@ -2,9 +2,9 @@ import React from 'react';
 import UIController from '../module/UIController';
 import RequestSender from '../module/RequestSender';
 
-import playerSkin1 from '../img/player1.png';
-import playerSkin2 from '../img/player2.png';
-import playerSkin3 from '../img/player3.png';
+import playerSkin1 from '../img/players/player1_preview.png';
+import playerSkin2 from '../img/players/player2_preview.png';
+import playerSkin3 from '../img/players/player3_preview.png';
 
 import './CharacterCreate.css';
 

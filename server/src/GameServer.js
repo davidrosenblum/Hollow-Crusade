@@ -3,16 +3,19 @@ let net = require("net"),
     dgram = require("dgram"),
     mysql = require("mysql");
 
-let DatabaseInquisitor = require("./js/DatabaseInquisitor"),
+let CombatObjects = require("./js/Comm").CombatObjects,
+    DatabaseInquisitor = require("./js/DatabaseInquisitor"),
     GameEvent = require("./js/GameEvent"),
     NPCFactory = require("./js/NPCFactory"),
     OPC = require("./js/Comm").OPC,
+    Owners = require("./js/Comm").Owners,
     Player = require("./js/Player"),
     PlayerSkins = require("./js/PlayerSkins"),
     Room = require("./js/Room"),
     RoomFactory = require("./js/RoomFactory"),
     Settings = require("./js/Settings"),
     Status = require("./js/Comm").Status,
+    Teams = require("./js/Comm").Teams,
     UDPMessage = require("./js/UDPMessage");
 
 const VERSION = "0.1.0",
@@ -20,16 +23,16 @@ const VERSION = "0.1.0",
     MSG_DELIM = "?&?",
     DEFAULT_MAP = 1;
 
-const TEAM_ID_PLAYERS = 1,
-    TEAM_ID_ENEMIES = 2,
-    TEAM_ID_NEUTRALS = 3;
+const FX_LEVEL_UP = {fxID: 1, duration: 1000},
+    FX_TELEPORT = {fxID: 2, duration: 1000},
+    FX_DEATH = {fxID: 3, duration: 100};
 
 let settings = null,
     database = null,
     sockets = {},
     accounts = {},
     rooms = {},
-    lastSocketID = 0;
+    lastSocketID = Owners.PLAYERS_START;
 
 net.Socket.prototype.toString = function(){
     return (this.socketID) ? `Client-${this.socketID}` : "[object net.Socket]";
@@ -132,6 +135,9 @@ let processSocketData = function(socket, opc, data){
     else if(opc === OPC.INSTANCE_ENTER){
         // use room change for exit
         processInstanceEnter(socket, data.instanceID || -1, data.instanceName || "");
+    }
+    else if(opc === OPC.BATTLE_ENTER){
+        processBattleEnter(socket, data.nodeID || -1);
     }
 };
 
@@ -352,10 +358,11 @@ let processInstanceEnter = function(socket, id=0, name=""){
     }
     else if(typeof name === "string"){
         try{
-            instance = createInstanceRoom(name);
+            instance = createRoom(name);
             console.log(`${instance} created.`);
         }
         catch(err){
+            console.log(err.message);
             send(socket, OPC.INSTANCE_ENTER, `Unable to create instance '${name}'.`, Status.BAD);
             return;
         }
@@ -368,6 +375,18 @@ let processInstanceEnter = function(socket, id=0, name=""){
 
     send(socket, OPC.INSTANCE_ENTER, `Unable to find instance ${id}.`, Status.BAD);
     return false;
+};
+
+let processBattleEnter = function(socket, nodeID){
+    if(socket.player.battleNode){
+        send(socket, OPC.BATTLE_ENTER, "You are already in a battle.", Status.BAD);
+        return;
+    }
+
+    let node = socket.room.getBattleNode(nodeID);
+    if(node){
+        node.addObject(socket.player);
+    }
 };
 
 let processCommand = function(socket, chat){
@@ -478,8 +497,26 @@ let processAdminCommand = function(socket, chat){
             sendChat(socket, `Cannot set '${attr}'.`);
         }
     }
+    else if(command === "get"){
+        let attr = values[0] || "";
+
+        if(!attr){
+            sendChat(socket, "Expected... get <property>");
+            return;
+        }
+
+        if(attr === "objects"){
+            socket.room.forEachObject((obj, id) => sendChat(socket, `${id} = ${obj}`));
+        }
+        else if(attr === "node"){
+            sendChat(socket, (socket.battleNode) ? `NodeID = ${socket.battleNode.nodeID}` : "null");
+        }
+        else{
+            sendChat(socket, `Cannot get ${attr}.`);
+        }
+    }
     else if(command === "instance"){
-        let attr = values[0] || null;
+        let attr = values[0] || "";
         
         if(!attr){
             sendChat(socket, "Expected... instance <name>");
@@ -523,6 +560,10 @@ let sendChat = function(socket, chat, sender=null){
 
 let sendRoomChat = function(room, chat, sender=null){
     sendRoom(room, OPC.CHAT_MESSAGE, {chat: chat, sender: sender});
+};
+
+let sendRoomFX = function(room, effect){
+    sendRoom(room, OPC.FX_SPAWN, effect);
 };
 
 let sendRoom = function(room, opc, data, status=Status.GOOD){
@@ -571,6 +612,10 @@ let handleRoomAddSocket = function(evt){
 
     room.addObject(target.player);
 
+    room.forEachBattleNode(node => {
+        send(target, OPC.BATTLE_NODE_CREATE, node.getSpawnData());
+    });
+
     sendRoomChat(room, `${target.player.name} connected.`);
 
     if(room.roomID < RoomFactory.INSTANCE_ID_START){
@@ -599,6 +644,8 @@ let handleRoomAddObject = function(evt){
     room.forEachSocket(socket => {
         send(socket, OPC.OBJECT_CREATE, object.getSpawnData());
     });
+
+    console.log(object);
 };
 
 let handleRoomRemoveObject = function(evt){
@@ -627,20 +674,36 @@ let handleRoomUpdateObject = function(evt){
     });
 };
 
+let handleBattleAddPlayer = function(evt){
+    let player = evt.target,
+        socket = sockets[player.ownerID];
+
+    send(socket, OPC.BATTLE_ENTER, player.battleNode.getData(), Status.GOOD);
+    sendRoom(socket.room, OPC.OBJECT_UPDATE, player.getData());
+};
+
+let handleBattleRemovePlayer = function(evt){
+    let node = evt.emitter,
+        player = evt.target;
+
+    send(sockets[player.ownerID], OPC.BATTLE_EXIT, null, Status.GOOD);
+};
+
 let handleObjectDeath = function(evt){
     // bind room!
     let object = evt.emitter;
     
+    sendRoomFX(this, FX_DEATH);
     this.removeObject(object.objectID);
     
-    if(object.type === "player"){
+    if(object.type === CombatObjects.PLAYER){
         // players get revived
         sendRoomChat(this, `${object.name} died (rez at spawn in 5 seconds).`);
         setTimeout(() => {
             // prep for instance nullification and room change possibility
             if(this !== null && sockets[object.ownerID].room === this){
                 object.health = object.healthCap * 0.25;
-                object.mana = object.manaCap * 0.25;
+                //object.mana = object.manaCap * 0.25;
 
                 this.addObject(object);
             }
@@ -649,7 +712,7 @@ let handleObjectDeath = function(evt){
         console.log("Timeout set....");
     }
     else{
-        // NPCs do not get rezed 
+        // NPCs do not get rezed
         object.clearListeners();
         object = null;
     }
@@ -657,7 +720,7 @@ let handleObjectDeath = function(evt){
 
 let createPlayer = function(socket, saveData){
     socket.player = new Player(saveData);
-    socket.player.teamID = TEAM_ID_PLAYERS;
+    socket.player.teamID = Teams.PLAYERS;
     socket.player.ownerID = socket.socketID;
 
     socket.player.on(GameEvent.PLAYER_MONEY, evt => {
@@ -691,14 +754,15 @@ let createPlayer = function(socket, saveData){
     socket.player.on(GameEvent.PLAYER_LEVEL_UP, evt => {
         sendChat(socket, `You reached level ${evt.value}!`);
 
+        sendRoomFX(socket.room, FX_LEVEL_UP);
         database.updateCharacter(socket.player.getSaveData());
 
         processObjectStats(socket, socket.player.objectID);
     });
 };
 
-let createMapRoom = function(name){
-    let room = RoomFactory.create(name);
+let createRoom = function(name, instance=true){
+    let room = (instance) ? RoomFactory.createInstance(name) : RoomFactory.create(name);
 
     room.on(GameEvent.ROOM_ADD_SOCKET, handleRoomAddSocket);
     room.on(GameEvent.ROOM_REMOVE_SOCKET, handleRoomRemoveSocket);
@@ -706,23 +770,12 @@ let createMapRoom = function(name){
     room.on(GameEvent.ROOM_REMOVE_OBJECT, handleRoomRemoveObject);
     room.on(GameEvent.ROOM_UPDATE_OBJECT, handleRoomUpdateObject);
 
+    room.on(GameEvent.BATTLE_ADD_PLAYER, handleBattleAddPlayer);
+    room.on(GameEvent.BATTLE_REMOVE_PLAYER, handleBattleRemovePlayer);
+
     rooms[room.roomID] = room;
 
     return room;
-};
-
-let createInstanceRoom = function(name){
-    let instance = RoomFactory.createInstance(name);
-    
-    instance.on(GameEvent.ROOM_ADD_SOCKET, handleRoomAddSocket);
-    instance.on(GameEvent.ROOM_REMOVE_SOCKET, handleRoomRemoveSocket);
-    instance.on(GameEvent.ROOM_ADD_OBJECT, handleRoomAddObject);
-    instance.on(GameEvent.ROOM_REMOVE_OBJECT, handleRoomRemoveObject);
-    instance.on(GameEvent.ROOM_UPDATE_OBJECT, handleRoomUpdateObject);
-
-    rooms[instance.roomID] = instance;
-
-    return instance;
 };
 
 let connectDB = function(callback){
@@ -758,9 +811,9 @@ let loadDatabaseTables = function(callback){
             RoomFactory.setRoomData(rows);
             console.log(" - Maps loaded.");
 
-            // create starting rooms
-            createMapRoom("Titan's Landing");
-            createMapRoom("Northern Keep");
+            // create starting rooms (false = map, not instance)
+            createRoom("Titan's Landing", false);
+            createRoom("Northern Keep", false);
 
             checkDone();
         }
@@ -839,3 +892,7 @@ console.log("|     Hollow Crusade\t |");
 console.log(`|   Game Server v${VERSION}\t |`);
 console.log(" \\______________________/\n");
 init();
+
+module.exports = {
+    send: send
+};

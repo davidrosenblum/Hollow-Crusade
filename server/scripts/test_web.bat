@@ -2,6 +2,6 @@
 @title Hollow Crusade - Web Server (Test)
 
 cd .. 
-nodemon src/web_server.js
+nodemon src/WebServer.js
 
 pause

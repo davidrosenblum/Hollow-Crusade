@@ -6,6 +6,14 @@ let GameEvent = class GameEvent{
         this.emitter = null;
     }
 };
+GameEvent.BATTLE_CREATE = "battle-create";
+GameEvent.BATTLE_START = "battle-start"
+GameEvent.BATTLE_END = "battle-end";
+GameEvent.BATTLE_PLAYERS_END = "battle-players-end";
+GameEvent.BATTLE_ADD_ENEMY = "battle-add-enemy";
+GameEvent.BATTLE_REMOVE_ENEMY = "battle-remove-enemy";
+GameEvent.BATTLE_ADD_PLAYER = "battle-add-player";
+GameEvent.BATTLE_REMOVE_PLAYER = "battle-remove-player";
 GameEvent.ROOM_ADD_OBJECT = "room-add-object";
 GameEvent.ROOM_REMOVE_OBJECT = "room-remove-object";
 GameEvent.ROOM_UPDATE_OBJECT = "room-update-object";

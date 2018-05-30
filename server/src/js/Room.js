@@ -1,8 +1,11 @@
 let EventEmitter = require("./EventEmitter"),
-    GameEvent = require("./GameEvent");
+    GameEvent = require("./GameEvent"),
+    BattleNode = require("./BattleNode"),
+    Owner = require("./Comm").Owners,
+    Teams = require("./Comm").Teams;
 
 let Room = class Room extends EventEmitter{
-    constructor(roomID, roomName, minLevel=1, startLocX=0, startLocY=0){
+    constructor(roomID, roomName, minLevel=1, startLocX=100, startLocY=100){
         super();
 
         this.roomID = roomID;
@@ -16,7 +19,32 @@ let Room = class Room extends EventEmitter{
         this.sockets = {};
         this.objects = {};
 
+        this.battleNodes = {};
+
         this.lastObjectID = 0;
+    }
+
+    createBattleNode(x, y, npcs, ownerID=Owner.ENEMIES, teamID=Teams.ENEMIES){
+        let node = new BattleNode(x, y, ownerID, teamID, npcs);
+        this.battleNodes[node.nodeID] = node;
+
+        node.on(GameEvent.BATTLE_ADD_ENEMY, evt => this.addObject(evt.target));
+        node.on(GameEvent.BATTLE_REMOVE_ENEMY, evt => this.removeObject(evt.target));
+
+        node.on(GameEvent.BATTLE_ADD_PLAYER, evt => {
+            this.emit(new GameEvent(GameEvent.BATTLE_ADD_PLAYER, evt.target));
+        });
+
+        node.on(GameEvent.BATTLE_REMOVE_PLAYER, evt => {
+            this.emit(new GameEvent(GameEvent.BATTLE_REMOVE_PLAYER, evt.target));
+        });
+        
+        node.on(GameEvent.BATTLE_END, evt => {
+            this.emit(new GameEvent(GameEvent.BATTLE_END, node));
+            delete this.battleNodes[node.nodeID];
+        });
+
+        this.emit(new GameEvent(GameEvent.BATTLE_CREATE, node));
     }
 
     addNPCs(array, teamID, respawnable=true){
@@ -50,6 +78,10 @@ let Room = class Room extends EventEmitter{
             delete this.sockets[socket.socketID];
             socket.room = null;
 
+            if(socket.player && socket.player.battleNode){
+                socket.player.battleNode.removeObject(socket.player);
+            }
+
             this.emit(new GameEvent(GameEvent.ROOM_REMOVE_SOCKET, socket));
         }
     }
@@ -69,7 +101,14 @@ let Room = class Room extends EventEmitter{
     }
 
     removeObject(id){
-        let object = (typeof id === "number") ? this.objects[id] : object;
+        let object = null;
+        if(typeof id === "number"){
+            object = this.getObject(id);
+        }
+        else if(id instanceof Object){
+            object = id;
+        }
+
         if(object){
             delete this.objects[id];
 
@@ -89,13 +128,19 @@ let Room = class Room extends EventEmitter{
 
     forEachSocket(fn){
         for(let id in this.sockets){
-            fn(this.sockets[id]);
+            fn(this.sockets[id], id);
         }
     }
 
     forEachObject(fn){
         for(let id in this.objects){
-            fn(this.objects[id]);
+            fn(this.objects[id], id);
+        }
+    }
+
+    forEachBattleNode(fn){
+        for(let id in this.battleNodes){
+            fn(this.battleNodes[id], id);
         }
     }
 
@@ -110,6 +155,10 @@ let Room = class Room extends EventEmitter{
             }
         });
         return null;
+    }
+
+    getBattleNode(nodeID){
+        return this.battleNodes[nodeID] || null;
     }
 
     kill(){

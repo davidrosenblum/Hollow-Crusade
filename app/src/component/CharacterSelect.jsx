@@ -28,10 +28,10 @@ class CharacterSelect extends React.Component{
                 rows.push(
                     <tr key={i}>
                         <td>
-                            {data.name}
+                            {data.name} - {data.level}
                         </td>
                         <td>
-                            Level {data.level}
+                            {data.map_name}
                         </td>
                         <td>
                             <button className="action-btn" onClick={evt=>RequestSender.selectCharacter(data.name)}>Select</button>

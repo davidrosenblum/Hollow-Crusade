@@ -7,6 +7,8 @@ let GameCombatObject = class GameCombatObject extends GameObject{
 
         super(opts);
 
+        this.battleNode = null;
+        
         this.name = (typeof opts.name === "string") ? opts.name : "";
         this.type = (typeof opts.type === "string") ? opts.type : "";
 
@@ -112,6 +114,10 @@ let GameCombatObject = class GameCombatObject extends GameObject{
         stats.criticalMultiplier = this.criticalMultiplier;
         stats.damageMultiplier = this.damageMultiplier;
         return stats;
+    }
+
+    toString(){
+        return `${this.name}:${this.type}`;
     }
 };
 
