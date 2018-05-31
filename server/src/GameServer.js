@@ -302,6 +302,9 @@ let processChat = function(socket, chat){
         else if(chat.charAt(0) === "/"){
             processCommand(socket, chat.substr(1));
         }
+        /*else if(chat.charAt(0) === "-"){
+            processCheatCode(socket, chat.substr(1));
+        }*/
         else{
             sendRoomChat(socket.room, chat, socket.player.name);
         }
@@ -351,9 +354,11 @@ let processPlayerSkinChange = function(socket, skinID){
     }
 };
 
-let processInstanceEnter = function(socket, id=0, name=""){
+let processInstanceEnter = function(socket, id=-1, name=null){
+    console.log(`id=${id}, name=${name}`)
+
     let instance = null;
-    if(typeof id === "number"){
+    if(typeof id === "number" && id > 0){
         instance = rooms[id] || null;
     }
     else if(typeof name === "string"){
@@ -363,9 +368,8 @@ let processInstanceEnter = function(socket, id=0, name=""){
         }
         catch(err){
             console.log(err.message);
-            console.log(`id=${id}, name=${name}`)
-            send(socket, OPC.INSTANCE_ENTER, `Unable to create/enter instance '${name}'.`, Status.BAD);
-            return;
+            send(socket, OPC.INSTANCE_ENTER, `Unable to create instance '${name}'.`, Status.BAD);
+            return false;
         }
     }
 
@@ -425,6 +429,27 @@ let processCommand = function(socket, chat){
     else{
         sendChat(socket, `'${command}' is an invalid command.`);
     }
+};
+
+let processCheatCode = function(socket, chat){
+    if(chat === "you are not the contents of your wallet"){
+        socket.player.addMoney(50);
+    }
+    else if(chat === "there is no spoon"){
+        socket.player.addMana(10);
+    }
+    else if(chat === "his name was robert paulson"){
+        socket.player.addXP(10);
+    }
+    else if(chat === "gondor calls for aid"){
+        socket.player.addHealth(10);
+    }
+    else if(chat === "all this pain is an illusion"){
+        socket.player.takeDamageFrom(10, "no-resist", socket.player);
+    }
+    else return;
+    
+    sendChat(socket, "Cheat accepted.");
 };
 
 let processAdminCommand = function(socket, chat){

@@ -9,14 +9,18 @@ import RequestSender from './RequestSender';
 let net = window.require("net"),
     dgram = window.require("dgram");
 
-const MSG_DELIM = "?&?",
-    TCP_PORT = 6615,
-    UDP_PORT = 6617;
+const MSG_DELIM = "?&?"
 
-let tcpWait = {};
+
+let serverHost = "localhost",
+    tcpPort = 6615,
+    udpPort = 6617,
+    tcpWait = {};
 
 let Client = class Client{
     constructor(){
+        this.parseCommandArgs();
+
         this.conn = null;
         this.socket = null;
         this.socketID = -1;
@@ -42,18 +46,44 @@ let Client = class Client{
         });
         this.socketUDP.on("listening", evt => console.log(`UDP socket opened on port ${this.socketUDP.address().port}.`));
 
-        this.socketUDP.bind(0, callback);
+        this.socketUDP.bind(0, this.config.serverHost, callback);
     }
 
     sendUDP(message){
-        this.socketUDP.send(message.toString(), UDP_PORT);
+        this.socketUDP.send(message.toString(), this.config.udpPort, this.config.serverHost);
+    }
+
+    parseCommandArgs(){
+        const SEARCH_FOR = ["--server-host=", "--tcp-port=", "--udp-port="],
+            PARAMS =       ["serverHost", "tcpPort", "udpPort"];
+
+        this.config = {
+            serverHost: "localhost",
+            tcpPort: 6615,
+            udpPort: 6617
+        };
+
+        for(let i = 0, arg; i < process.argv; i++){
+            arg = process.argv[i];
+
+            for(let j = 0; j < SEARCH_FOR.length; i++){
+                if(arg.indexOf(SEARCH_FOR[j]) > -1){
+                    this.config[PARAMS[j]] = arg.split(SEARCH_FOR[j])[1] || this.config[PARAMS[j]]; 
+                    break;
+                }
+            }
+        }
+
+        console.log(`Config=${JSON.stringify(this.config)}`);
     }
 
     connect(){
+        this.parseCommandArgs();
+
         console.log("Connecting....");
         UIController.showLoading("Connecting to server...");
         
-        this.conn = net.createConnection(TCP_PORT, () => {
+        this.conn = net.createConnection(this.config.tcpPort, this.config.serverHost, () => {
             console.log("Connected!");
             this.bind(() => {
                 RequestSender.auth(this.socketUDP.address().port);
@@ -61,7 +91,7 @@ let Client = class Client{
         });
 
         this.conn.on("error", err => {
-            UIController.showLoading("Connection error.");
+            UIController.showLoading("Connection error.", true);
         });
 
         this.conn.on("data", this.recieveData.bind(this));

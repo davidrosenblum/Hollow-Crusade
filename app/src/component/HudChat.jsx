@@ -1,5 +1,6 @@
 import React from 'react';
 import RequestSender from '../module/RequestSender';
+import UIController from '../module/UIController';
 
 import './HudChat.css';
 
@@ -15,7 +16,12 @@ class HudChat extends React.Component{
     onChatInput(evt){
         if(evt.keyCode === 13){
             if(this.state.chatInput){
-                RequestSender.chat(this.state.chatInput);
+                if(this.state.chatInput === "/cls"){
+                    UIController.hudChatClear();
+                }
+                else{
+                    RequestSender.chat(this.state.chatInput);
+                }
             }
             this.setState({chatInput: ""});
             evt.target.value = "";

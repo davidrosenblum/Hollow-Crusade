@@ -7,11 +7,12 @@
 */
 
 let PortalNode = class PortalNode{
-    constructor(gridX, gridY, instanceID, instanceName=null){
-        this.gridX = gridY;
+    constructor(gridX, gridY, instanceID, instanceName=null, text=null){
+        this.gridX = gridX;
         this.gridY = gridY;
         this.instanceID = instanceID;
         this.instanceName = instanceName;
+        this.text = text;
         this.portalID = ++PortalNode.lastPortalID;
     }
 
@@ -21,7 +22,8 @@ let PortalNode = class PortalNode{
             gridX: this.gridX,
             gridY: this.gridY,
             instanceID: this.instanceID,
-            instanceName: this.instanceName
+            instanceName: this.instanceName,
+            text: this.text
         };
     }
 };

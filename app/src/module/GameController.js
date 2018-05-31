@@ -49,11 +49,11 @@ let GameController = class GameController extends dark.EventEmitter{
             throw new Error(`Bad map ${name}!`);
         }
 
-        dark.init("#canvas-container", this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
-
         if(this.mapLoaded){
             this.unloadMap();
         }
+
+        dark.init("#canvas-container", this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
 
         dark.MapBuilder.buildGrid(
             mapData.background,
@@ -112,8 +112,6 @@ let GameController = class GameController extends dark.EventEmitter{
             return;
         }
 
-        //dark.kill();
-
         this.background.removeChildren();
         this.scene.removeChildren();
         this.foreground.removeChildren();
@@ -141,6 +139,9 @@ let GameController = class GameController extends dark.EventEmitter{
         UIController.hudTarget(null);
 
         this.mapLoaded = false;
+
+        dark.kill();
+        UIController.hudChatClear();
     }
 
     enterBattle(){
@@ -252,6 +253,7 @@ let GameController = class GameController extends dark.EventEmitter{
         }
     }
 
+
     createPortalNode(data){
         let portal = new GameObjects.PortalNode();
         this.portalNodes[data.portalID] = portal;
@@ -259,15 +261,27 @@ let GameController = class GameController extends dark.EventEmitter{
         portal.x = data.gridX * this.CELL_SIZE;
         portal.y = data.gridY * this.CELL_SIZE;
         portal.portalID = data.portalID;
-        portal.instanceID = data.instanceID || 1;
+        portal.instanceID = data.instanceID;
         portal.instanceName = data.instanceName || null;
         portal.type = "portal-node";
 
-        if(this.hud.addChild(portal)){
+        if(this.scene.addChild(portal)){
+            if(data.text){
+                let tf = new dark.TextField(`<${data.text} Portal>`);
+                portal.addChild(tf);
+                tf.centerText();
+                
+                this.scene.depthSort();
+            }
+
             portal.on(dark.Event.CLICK, evt => {
                 if(!this.inBattle){
-                    //RequestSender.changeRooms(null, portal.exitRoomID);
-                    RequestSender.instanceEnter(portal.instanceID, portal.instanceName);
+                    if(this.player.inRangeOf(portal, this.CELL_SIZE)){
+                        RequestSender.instanceEnter(portal.instanceID, portal.instanceName);
+                    }
+                    else{
+                        UIController.hudChat("You are too far away to enter the portal.");
+                    }
                 }
             });
         }
@@ -292,9 +306,18 @@ let GameController = class GameController extends dark.EventEmitter{
         node.type = "battle-node";
 
         if(this.hud.addChild(node)){
+            let text = new dark.TextField(`<Enter Battle>`);
+            node.addChild(text);
+            text.center();
+
             node.on(dark.Event.CLICK, evt => {
                 if(!this.inBattle){
-                    RequestSender.battleEnter(node.nodeID);
+                    if(this.player.inRangeOf(node, this.CELL_SIZE)){ 
+                        RequestSender.battleEnter(node.nodeID);
+                    }
+                    else{
+                        UIController.hudChat("You are too far away to enter the battle.");
+                    }
                 }
             });
         }

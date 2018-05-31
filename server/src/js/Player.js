@@ -39,7 +39,10 @@ let Player = class Player extends GameCombatObject{
         this.weaponLevel = (typeof saveData.weapon_level === "number") ? Math.max(1, saveData.weapon_level) : 1;
 
         this.restoreLevel(Math.max(1,saveData.level));
-        this.xp += Math.max(0, saveData.xp);
+
+        if(this.level < Player.LEVEL_CAP){
+            this.xp += Math.max(0, saveData.xp);
+        }
 
         this.applySkinOnLoad(this.skinID);
     }

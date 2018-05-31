@@ -31,6 +31,7 @@ import fallenCrusaderSrc from '../img/monsters/fallen_crusader.png';
 import meehanSrc from '../img/monsters/meehan.png';
 
 import battleNodeSrc from '../img/gui/battle_node.png';
+import portalNodeSrc from '../img/gui/portal_node.png';
 
 let AssetPreloader = class AssetPreloader{
     static preloadAssets(){
@@ -65,6 +66,7 @@ let AssetPreloader = class AssetPreloader{
         dark.AssetManager.loadImage(meehanSrc, null, "meehan");
 
         dark.AssetManager.loadImage(battleNodeSrc, null, "battle-node");
+        dark.AssetManager.loadImage(portalNodeSrc, null, "portal-node");
     }
 };
 
