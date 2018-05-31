@@ -1,5 +1,16 @@
+/*
+    DatabaseInquisitor 
+    uses a mysql database connector to query the databas, includes....
+        * all table creation, selection, & insertion queries
+        * account creation (with password salting/hashing) + password reset 
+        * character creation / retrieval / update / deletion (CRUD!) 
+    
+    (David)
+*/
+
+// all possible characters to use in hashing (and salts)
 const HASH_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890".split(""),
-    SALT_SIZE = 128;
+    SALT_SIZE = 128; // minimum salt 
 
 let DatabaseInquisitor = class DatabaseInquisitor{
     constructor(mysqlConn){
@@ -7,10 +18,12 @@ let DatabaseInquisitor = class DatabaseInquisitor{
         this.createTables();
     }
 
-    hash(str, salt){
+    // creates a hash key for the given input, optional salt can be applied 
+    hash(str, salt=null){
         let input = str + (salt || ""),
             output = "";
 
+        // hash each character (double the character code plus the offset mod the hashtable size)
         for(let i = 0, cc; i < input.length; i++){
             cc = input.charCodeAt(i) * 2 + i;
 
@@ -20,14 +33,18 @@ let DatabaseInquisitor = class DatabaseInquisitor{
         return output;
     }
 
+    // creates a random string to append to the end of password based off of the size of the password
     generateSalt(initStr){
+        // how many characters to generate? 
         let size = SALT_SIZE - (initStr ? initStr.length : 0),
             salt = "";
 
+        // password is too long for a salt 
         if(size < 1){
             return "";
         }
 
+        // generate characters (random hash characters)
         for(let i = 0; i < size; i++){
             salt += HASH_CHARS[Math.trunc(Math.random() * HASH_CHARS.length)];
         }
@@ -518,6 +535,7 @@ let DatabaseInquisitor = class DatabaseInquisitor{
     }
 
     createTables(){
+        // create each table if they do not exist
         this.createAccountsTable();
         this.createSaltsTable();
         this.createMapsTables();
@@ -525,6 +543,7 @@ let DatabaseInquisitor = class DatabaseInquisitor{
         this.createSkinsTable();
         this.createCharactersTable();
 
+        // insert any missing data
         this.insertMaps();
         this.insertSkins();
         this.insertNPCs();        

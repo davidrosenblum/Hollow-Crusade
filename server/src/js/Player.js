@@ -1,3 +1,13 @@
+/*
+    Player
+    loads a player from a database save
+    contains leveling and rewards data
+    can apply different skins with stats
+
+    (David)
+*/
+
+// import modules
 let GameCombatObject = require("./GameCombatObject"),
     GameEvent = require("./GameEvent"),
     PlayerSkins = require("./PlayerSkins");
@@ -21,7 +31,7 @@ let Player = class Player extends GameCombatObject{
         this.tokens = (typeof saveData.tokens === "number") ? Math.max(0, saveData.tokens) : 0;
 
         this.skinID = (typeof saveData.skin_id === "number") ? Math.max(1,saveData.skin_id) : 1;
-        this.lastMapID = (typeof saveData.map_id === "number") ? Math.max(1, saveData.last_map) : 1;
+        this.lastMapID = (typeof saveData.map_id === "number") ? Math.max(1, saveData.map_id) : 1;
         
         this.spiritLevel = (typeof saveData.spirit_level === "number") ? Math.max(1, saveData.spirit_level) : 1;
         this.afflictionLevel = (typeof saveData.affliction_level === "number") ? Math.max(1, saveData.affliction_level) : 1;
@@ -34,31 +44,39 @@ let Player = class Player extends GameCombatObject{
         this.applySkinOnLoad(this.skinID);
     }
 
+    // should be called on init, levels a player back up without triggering events 
     restoreLevel(level){
         level = Math.max(1, level);
         level = Math.min(50, level);
 
         for(let i = 1; i < level; i++){
-            this.levelUp(true);
+            this.levelUp(true); // 'true' means don't fire level listeners 
         }
 
         this.fillHealth();
         this.fillMana();
     }
 
+    // adds 1 level to the player
     levelUp(isRestoring=false){
-        if(this.level === Player.LEVEL_CAP){
-            return;
-        }
-
         let nextLevel = this.level + 1;
 
+        // don't level past cap 
         if(nextLevel <= Player.LEVEL_CAP){
             this.level = nextLevel;
             this.xp = 0;
-            this.xpNeeded *= 1.08;
+            this.xpNeeded *= 1.10;
 
-            this.healthCap += Math.floor(this.level / 10);
+            let n = Math.floor(this.level / 10);
+
+            // levels 1-19
+            if(n === 0 || n === 1) this.healthCap +=1; 
+            // levels 20-39
+            else if(n === 2 || n === 3) this.healthCap += 2;
+            // levels 40-49
+            else if(n === 4) this.healthCap += 3;
+            // levels 50+
+            else this.healthCap += 4;
 
             if(this.level % 2 === 0){
                 this.manaCap++;
@@ -69,11 +87,6 @@ let Player = class Player extends GameCombatObject{
 
             this.criticalModifier += 0.001;
             this.criticalMultiplier += 0.0051;
-
-            if(!isRestoring){
-                this.emit(new GameEvent(GameEvent.PLAYER_LEVEL_UP, null, this.level));
-                this.addPoints(1);
-            }
         }
 
         if(this.level === Player.LEVEL_CAP){
@@ -83,6 +96,11 @@ let Player = class Player extends GameCombatObject{
 
         this.fillHealth();
         this.fillMana();
+
+        if(!isRestoring){
+            this.emit(new GameEvent(GameEvent.PLAYER_LEVEL_UP, null, this.level));
+            this.addPoints(1);
+        }
     }
 
     fillHealth(){

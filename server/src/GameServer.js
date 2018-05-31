@@ -121,7 +121,7 @@ let processSocketData = function(socket, opc, data){
         processCharacterDelete(socket, data.name || "");
     }
     else if(opc === OPC.ROOM_CHANGE){
-        processRoomChange(socket, data.roomName);
+        processRoomChange(socket, data.roomID || 1);
     }
     else if(opc === OPC.CHAT_MESSAGE){
         processChat(socket, data.chat || "");
@@ -287,7 +287,7 @@ let processRoomChange = function(socket, roomID){
                 delete rooms[currRoom.roomID];
                 currRoom = null;   
             }
-            else console.log(`${currRoom} still has members`);
+            //else console.log(`${currRoom} still has members`);
         }
     }
 
@@ -353,7 +353,7 @@ let processPlayerSkinChange = function(socket, skinID){
 
 let processInstanceEnter = function(socket, id=0, name=""){
     let instance = null;
-    if(id >= RoomFactory.INSTANCE_ID_START){
+    if(typeof id === "number"){
         instance = rooms[id] || null;
     }
     else if(typeof name === "string"){
@@ -363,7 +363,8 @@ let processInstanceEnter = function(socket, id=0, name=""){
         }
         catch(err){
             console.log(err.message);
-            send(socket, OPC.INSTANCE_ENTER, `Unable to create instance '${name}'.`, Status.BAD);
+            console.log(`id=${id}, name=${name}`)
+            send(socket, OPC.INSTANCE_ENTER, `Unable to create/enter instance '${name}'.`, Status.BAD);
             return;
         }
     }
@@ -543,6 +544,9 @@ let processAdminCommand = function(socket, chat){
             sendChat(socket, `Target ID ${val} not found.`);
         }
     }
+    else if(command == "killme"){
+        socket.player.takeDamageFrom(socket.player.health, "no-resist", socket.player);
+    }
     else if(command === "kick"){
         kickPlayer(room, values[0] || "");
     }
@@ -602,37 +606,41 @@ let kickPlayer = function(room, name){
 
 let handleRoomAddSocket = function(evt){
     let room = evt.emitter,
-        target = evt.target;
+        socket = evt.target;
 
-    send(target, OPC.ROOM_CHANGE, {roomName: room.roomName, roomID: room.roomID, op: "join"});
+    send(socket, OPC.ROOM_CHANGE, {roomName: room.roomName, roomID: room.roomID, op: "join"});
 
     room.forEachObject(object => {
-        send(target, OPC.OBJECT_CREATE, object.getSpawnData());
+        send(socket, OPC.OBJECT_CREATE, object.getSpawnData());
     });
 
-    room.addObject(target.player);
+    room.addObject(socket.player);
 
     room.forEachBattleNode(node => {
-        send(target, OPC.BATTLE_NODE_CREATE, node.getSpawnData());
+        send(socket, OPC.BATTLE_NODE_CREATE, node.getSpawnData());
     });
 
-    sendRoomChat(room, `${target.player.name} connected.`);
+    room.forEachPortalNode(portal => {
+        send(socket, OPC.PORTAL_NODE_CREATE, portal.getSpawnData());
+    });
+
+    sendRoomChat(room, `${socket.player.name} connected.`);
 
     if(room.roomID < RoomFactory.INSTANCE_ID_START){
-        target.player.lastMapID = room.roomID;
-        database.updateCharacter({name: target.player.name, map_id: room.roomID});
+        socket.player.lastMapID = room.roomID;
+        database.updateCharacter({name: socket.player.name, map_id: room.roomID});
     }
 };
 
 let handleRoomRemoveSocket = function(evt){
     let room = evt.emitter,
-        target = evt.target;
+        socket = evt.target;
 
-    send(target, OPC.ROOM_CHANGE, {roomName: room.roomName, roomID: room.roomID, op: "leave"});
+    send(socket, OPC.ROOM_CHANGE, {roomName: room.roomName, roomID: room.roomID, op: "leave"});
 
-    room.removeObject(target.player.objectID);
+    room.removeObject(socket.player.objectID);
 
-    sendRoomChat(room, `${target.player.name} disconnected.`);
+    sendRoomChat(room, `${socket.player.name} disconnected.`);
 };
 
 let handleRoomAddObject = function(evt){
@@ -642,20 +650,20 @@ let handleRoomAddObject = function(evt){
     object.on(GameEvent.UNIT_DEATH, handleObjectDeath.bind(room));
 
     room.forEachSocket(socket => {
+        send(socket, OPC.FX_SPAWN, FX_TELEPORT);
         send(socket, OPC.OBJECT_CREATE, object.getSpawnData());
     });
-
-    console.log(object);
 };
 
 let handleRoomRemoveObject = function(evt){
     let room = evt.emitter,
         object = evt.target;
 
+    let fx = (object.type === "player") ? FX_TELEPORT : FX_DEATH;
     room.forEachSocket(socket => {
+        send(socket, OPC.FX_SPAWN, fx);
         send(socket, OPC.OBJECT_DELETE, {objectID: object.objectID});
     });
-
     object.removeListeners(GameEvent.UNIT_DEATH);
 };
 
@@ -689,6 +697,34 @@ let handleBattleRemovePlayer = function(evt){
     send(sockets[player.ownerID], OPC.BATTLE_EXIT, null, Status.GOOD);
 };
 
+let handleBattleEnd = function(evt){
+    let node = evt.emitter,
+        player = evt.target,
+        room = evt.bubbler;
+    
+    sendRoom(room, OPC.BATTLE_NODE_DELETE, {nodeID: node.nodeID}, Status.GOOD);
+
+    node.forEachPlayer(player => {
+        send(sockets[player.ownerID], OPC.BATTLE_EXIT, Status.GOOD);
+    });
+};
+
+// creates portals after room exists...
+let handlePortalCreate = function(evt){
+    let portal = evt.emitter,
+        room = evt.bubbler;
+
+    sendRoom(room, OPC.PORTAL_NODE_CREATE, porta.getSpawnData(), Status.GOOD);
+};
+
+// deletes portals after room exists...
+let handlePortalDelete = function(evt){
+    let portal = evt.emitter,
+        room = evt.bubbler;
+
+    sendRoom(room, OPC.PORTAL_NODE_DELETE, {portalID: portal.portalID}, Status.GOOD);
+};  
+
 let handleObjectDeath = function(evt){
     // bind room!
     let object = evt.emitter;
@@ -697,6 +733,11 @@ let handleObjectDeath = function(evt){
     this.removeObject(object.objectID);
     
     if(object.type === CombatObjects.PLAYER){
+        // in battle?
+        if(object.battleNode){
+            object.battleNode.removePlayer(object);
+        }
+
         // players get revived
         sendRoomChat(this, `${object.name} died (rez at spawn in 5 seconds).`);
         setTimeout(() => {
@@ -708,8 +749,6 @@ let handleObjectDeath = function(evt){
                 this.addObject(object);
             }
         }, 5000);
-
-        console.log("Timeout set....");
     }
     else{
         // NPCs do not get rezed
@@ -770,8 +809,15 @@ let createRoom = function(name, instance=true){
     room.on(GameEvent.ROOM_REMOVE_OBJECT, handleRoomRemoveObject);
     room.on(GameEvent.ROOM_UPDATE_OBJECT, handleRoomUpdateObject);
 
+    /* later add portal/battle node creations handler and update players 
+        but for now there is only static portals/battles */
+
+    room.on(GameEvent.PORTAL_NODE_CREATE, handlePortalCreate);
+    room.on(GameEvent.PORTAL_NODE_DELETE, handlePortalDelete);
+
     room.on(GameEvent.BATTLE_ADD_PLAYER, handleBattleAddPlayer);
     room.on(GameEvent.BATTLE_REMOVE_PLAYER, handleBattleRemovePlayer);
+    room.on(GameEvent.BATTLE_END, handleBattleEnd);
 
     rooms[room.roomID] = room;
 

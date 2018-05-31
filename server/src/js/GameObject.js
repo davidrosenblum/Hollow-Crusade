@@ -1,3 +1,12 @@
+/*
+    GameObject
+    'abstract' superclass for all game objects
+    includes positioning, animation, and ID information 
+
+    (David)
+*/
+
+// import modules
 let EventEmitter = require("./EventEmitter");
 
 let GameObject = class GameObject extends EventEmitter{
@@ -12,6 +21,7 @@ let GameObject = class GameObject extends EventEmitter{
         this.objectID = (typeof opts.objectID === "number") ? opts.objectID : -1;
     }
 
+    // updates the object's 'x', 'y', and 'anim' values if they are the acceptable datatype 
     applyUpdate(data){
         if(typeof data.x === "number"){
             this.x = data.x;
@@ -26,6 +36,7 @@ let GameObject = class GameObject extends EventEmitter{
         }
     };
 
+    // creates an object that includes the objectID, x, y, and anim values 
     getData(){
         return {
             objectID: this.objectID,

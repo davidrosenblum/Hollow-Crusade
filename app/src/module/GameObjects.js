@@ -98,6 +98,12 @@ const GameObjects = {
         }
     },
 
+    PortalNode: class PortalNode extends dark.Sprite{
+        constructor(x, y){
+            super("battle-node", x, y, GameController.CELL_SIZE, GameController.CELL_SIZE);
+        }
+    },
+
     BattleNode: class BattleNode extends dark.Sprite{
         constructor(x, y){
             super("battle-node", x, y, GameController.CELL_SIZE, GameController.CELL_SIZE);
