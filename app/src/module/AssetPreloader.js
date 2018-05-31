@@ -1,8 +1,10 @@
 import dark from '../lib/dark';
 
+import dirtSrc from '../img/environment/dirt.png';
 import grassSrc from '../img/environment/grass.png';
 import grassDirtHorzSrc from '../img/environment/grass_dirt_horz.png';
 import grassDirtVertSrc from '../img/environment/grass_dirt_vert.png';
+import grassCliffSrc from '../img/environment/grass_cliff.png';
 
 import wallSrc from '../img/environment/wall.png';
 import wallCornerLeftSrc from '../img/environment/wall_corner_left.png';
@@ -32,9 +34,12 @@ import battleNodeSrc from '../img/gui/battle_node.png';
 
 let AssetPreloader = class AssetPreloader{
     static preloadAssets(){
+        dark.AssetManager.loadImage(dirtSrc, null, "dirt");
         dark.AssetManager.loadImage(grassSrc, null, "grass");
         dark.AssetManager.loadImage(grassDirtHorzSrc, null, "grass_dirt_horz");
         dark.AssetManager.loadImage(grassDirtVertSrc, null, "grass_dirt_vert");
+        dark.AssetManager.loadImage(grassCliffSrc, null, "grass_cliff");
+
         dark.AssetManager.loadImage(wallSrc, null, "wall");
         dark.AssetManager.loadImage(wallCornerLeftSrc, null, "wall_corner_left");
         dark.AssetManager.loadImage(wallCornerRightSrc, null, "wall_corner_right");

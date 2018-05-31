@@ -135,6 +135,12 @@ let Client = class Client{
         else if(opc === OPC.PLAYER_SKIN_CHANGE){
             this.handlePlayerSkinChange(data, status);
         }
+        else if(opc === OPC.PORTAL_NODE_CREATE){
+            this.handlePortalCreate(data, status);
+        }
+        else if(opc === OPC.PORTAL_NODE_DELETE){
+            this.handlePortalDelete(data, status);
+        }
         else if(opc === OPC.BATTLE_ENTER){
             this.handleBattleEnter(data, status);
         }
@@ -242,18 +248,30 @@ let Client = class Client{
         }
     }
 
+    handlePortalCreate(data, status){
+        if(status === Status.GOOD){
+            GameController.createPortalNode(data);
+        }
+    }
+
+    handlePortalDelete(data, status){
+        if(status === Status.GOOD){
+            GameController.deletePortalNode(data.portalID);
+        }
+    }
+
     handleBattleEnter(data, status){
         if(status === Status.GOOD){
             GameController.enterBattle();
         }
         else{
-            GameController.inBattle = false;
+            GameController.exitBattle();
         }
     }
 
     handleBattleExit(data, status){
         if(status === Status.GOOD){
-            GameController.inBattle = false;
+            GameController.exitBattle();
         }
     }
 

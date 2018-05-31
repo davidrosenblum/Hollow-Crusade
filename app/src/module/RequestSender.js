@@ -36,8 +36,8 @@ let RequestSender = class RequestSender{
     }
 
     static changeRooms(name, id){
-        // id = join a specific room (useful for instances)
-        // name = join a map (figures out the ID)
+        // name = generate a new instance of that room type
+        // id = join an existing instance/map (maps are instances with known IDs!)
         Client.send(OPC.ROOM_CHANGE, {roomID: id, roomName: name});
     }
 
@@ -52,6 +52,10 @@ let RequestSender = class RequestSender{
 
     static objectStats(id){
         Client.send(OPC.OBJECT_STATS, {objectID: id});
+    }
+
+    static instanceEnter(instanceID, instanceName){
+        Client.send(OPC.INSTANCE_ENTER, {instanceID: instanceID, instanceName: instanceName});
     }
 
     static battleEnter(id){

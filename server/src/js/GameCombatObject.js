@@ -1,3 +1,15 @@
+/*
+    GameCombatObject
+    'abstract' superclass for all combat objects
+    holds additional character information, such as name, team, and owner IDs
+    hols all combat information (health, modifiers, etc)
+    can calculate damage, dodges, criticals
+    can fight other game combat objecs
+
+    (David)
+*/
+
+// import modules
 let GameEvent = require("./GameEvent"),
     GameObject = require("./GameObject");
 
@@ -38,6 +50,7 @@ let GameCombatObject = class GameCombatObject extends GameObject{
         this.moveSpeed = (typeof opts.moveSpeed === "number") ? opts.moveSpeed : 1;
     }
 
+    // takes PRECALCULATED damage from the attacker, applies resistances and defenses
     takeDamageFrom(damage, damageType, attacker){
         if(this.rollDodge(damageType)){
             this.emit(new GameEvent(GameEvent.UNIT_DODGE, attacker, damage));
@@ -54,14 +67,17 @@ let GameCombatObject = class GameCombatObject extends GameObject{
         return false;
     }
 
+    // roll to dodge the attack completely
     rollDodge(damageType){
         return Math.random() + (this.defense[damageType] || 0) >= GameCombatObject.DEF_ROLL_REQUIRED; 
     }
 
+    // roll to determine if critical damage should be applied
     rollCritical(){
         return Math.random() + this.criticalModifier >= GameCombatObject.CRIT_ROLL_REQUIRED;
     }
 
+    // roll to determine critical damage and apply if neccessary 
     rollAndApplyCritical(initDamage){
         if(this.rollCritical()){
             // emit critical?
@@ -70,6 +86,7 @@ let GameCombatObject = class GameCombatObject extends GameObject{
         return initDamage;
     }
 
+    // adds health and obeys health capacity
     addHealth(hp){
         this.health += hp;
         if(this.health >= this.healthCap){
@@ -77,6 +94,7 @@ let GameCombatObject = class GameCombatObject extends GameObject{
         }
     }
 
+    // adds mana and obeys mana capacity 
     addMana(mp){
         this.mana += mp;
         if(this.mana >= this.manaCap){
@@ -84,6 +102,7 @@ let GameCombatObject = class GameCombatObject extends GameObject{
         }
     }
 
+    // all the info needed for the client to create this object
     getSpawnData(){
         let data = this.getData();
         
@@ -96,6 +115,7 @@ let GameCombatObject = class GameCombatObject extends GameObject{
         return data;
     }
 
+    // stats object, includes every detail needed about this object 
     getStats(){
         let stats = this.getData();
         stats.name = this.name;
@@ -121,7 +141,7 @@ let GameCombatObject = class GameCombatObject extends GameObject{
     }
 };
 
-GameCombatObject.DEF_ROLL_REQUIRED = 0.8;
-GameCombatObject.CRIT_ROLL_REQUIRED = 0.7;
+GameCombatObject.DEF_ROLL_REQUIRED = 0.8;   // min value required to dodge an attack
+GameCombatObject.CRIT_ROLL_REQUIRED = 0.7;  // min value required to deal critical damage
 
 module.exports = GameCombatObject;

@@ -1,3 +1,10 @@
+/*
+    UDPMessage
+    standard UDP payload used between the server and the client 
+
+    (David)
+*/
+
 let UDPMessage = class UDPMessage{
     constructor(socketID, objectID, x, y, anim){
         this.socketID = socketID;
@@ -7,10 +14,12 @@ let UDPMessage = class UDPMessage{
         this.anim = anim;
     }
 
+    // UDPMessage in string format (send this)
     toString(){
         return `${this.socketID},${this.objectID},${this.x},${this.y},${this.anim}`;
     }
 
+    // parses the UDP message read from the socket and creates UDPMessage object
     static parse(message){
         let msg = message.toString().split(",");
 

@@ -600,7 +600,11 @@ let dark = (function(){
         }
 
         get width(){
-            return CTX.measureText(this.text).width;
+            CTX.save();
+            CTX.font = this.font;
+            let width = CTX.measureText(this.text).width;
+            CTX.restore();
+            return width;
         }
 
         get height(){

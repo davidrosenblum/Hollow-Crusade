@@ -12,6 +12,7 @@ let GameController = class GameController extends dark.EventEmitter{
         this.background = new dark.DisplayObjectContainer();
         this.scene = new dark.DisplayObjectContainer();
         this.foreground = new dark.DisplayObjectContainer();
+        this.hud = new dark.DisplayObjectContainer();
 
         this.keyHandler = new dark.KeyHandler(document.body);
         this.objectManager = new dark.ObjectManager();
@@ -27,6 +28,7 @@ let GameController = class GameController extends dark.EventEmitter{
         this.mapLoaded = false;
         this.inBattle = false;
         this.battleNodes = {};
+        this.portalNodes = {};
         
         this.CELL_SIZE = 96;
         this.CANVAS_WIDTH = 1280;
@@ -38,6 +40,7 @@ let GameController = class GameController extends dark.EventEmitter{
         dark.stage.addChild(this.background);
         dark.stage.addChild(this.scene);
         dark.stage.addChild(this.foreground);
+        dark.stage.addChild(this.hud);
     }
 
     loadMap(name){
@@ -84,7 +87,7 @@ let GameController = class GameController extends dark.EventEmitter{
             mapData.background.length * this.CELL_SIZE
         );
 
-        this.scroller = new dark.Scroller([this.background, this.scene, this.foreground], this.mapBounds);
+        this.scroller = new dark.Scroller([this.background, this.scene, this.foreground, this.hud], this.mapBounds);
 
         this.collidables = [];
         this.scene.forEachChild(child => {
@@ -114,6 +117,7 @@ let GameController = class GameController extends dark.EventEmitter{
         this.background.removeChildren();
         this.scene.removeChildren();
         this.foreground.removeChildren();
+        this.hud.removeChildren();
 
         // remove scroll
         this.background.x = 0;
@@ -142,8 +146,15 @@ let GameController = class GameController extends dark.EventEmitter{
     enterBattle(){
         this.inBattle = true;
         this.clearTarget();
+        this.hud.visible = false;
         this.scroller.lookAt(this.player);
         // UIController.showBattle...? 
+    }
+
+    exitBattle(){
+        this.inBattle = false;
+        this.hud.visible = true;
+        this.scroller.lookAt(this.player);
     }
 
     handleSelectTarget(evt){
@@ -241,32 +252,60 @@ let GameController = class GameController extends dark.EventEmitter{
         }
     }
 
+    createPortalNode(data){
+        let portal = new GameObjects.PortalNode();
+        this.portalNodes[data.portalID] = portal;
+
+        portal.x = data.gridX * this.CELL_SIZE;
+        portal.y = data.gridY * this.CELL_SIZE;
+        portal.portalID = data.portalID;
+        portal.instanceID = data.instanceID || 1;
+        portal.instanceName = data.instanceName || null;
+        portal.type = "portal-node";
+
+        if(this.hud.addChild(portal)){
+            portal.on(dark.Event.CLICK, evt => {
+                if(!this.inBattle){
+                    //RequestSender.changeRooms(null, portal.exitRoomID);
+                    RequestSender.instanceEnter(portal.instanceID, portal.instanceName);
+                }
+            });
+        }
+    }
+    
+    deletePortalNode(portalID){
+        let portal = this.portalNodes[portalID];
+        if(portal){
+            delete this.portalNodes[portalID];
+            portal.remove();
+            portal = null;
+        }
+    }
+
     createBattleNode(data){
-
-        let type = GameObjects.getClass("BattleNode");
-
-        let node = new type();
+        let node = new GameObjects.BattleNode();
         this.battleNodes[data.nodeID] = node;
         
-        node.x = data.x + (this.CELL_SIZE * 2) - (node.width / 2);
-        node.y = data.y - this.CELL_SIZE;
+        node.x = data.x + this.CELL_SIZE;
+        node.y = data.y + this.CELL_SIZE * 2 - (this.CELL_SIZE/2);
         node.nodeID = data.nodeID;
         node.type = "battle-node";
 
-        node.on(dark.Event.CLICK, evt => {
-            if(!this.inBattle){
-                RequestSender.battleEnter(node.nodeID);
-            }
-        });
-
-        this.foreground.addChild(node);
+        if(this.hud.addChild(node)){
+            node.on(dark.Event.CLICK, evt => {
+                if(!this.inBattle){
+                    RequestSender.battleEnter(node.nodeID);
+                }
+            });
+        }
     }
 
     deleteBattleNode(nodeID){
         let node = this.battleNodes[nodeID];
         if(node){
-            this.foreground.removeChild(node);
             delete this.battleNodes[nodeID];
+            node.remove();
+            node = null;
         }
     }
 

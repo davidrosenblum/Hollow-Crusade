@@ -20,6 +20,20 @@ const MapObjects = {
         }
     },
 
+    DirtTile: class DirtTile extends dark.Sprite{
+        constructor(x, y){
+            super("dirt", x, y, GameController.CELL_SIZE, GameController.CELL_SIZE);
+        }
+    },
+
+    GrassCliffTile: class GrassCliffTile extends dark.Sprite{
+        constructor(x, y){
+            super("grass_cliff", x, y, GameController.CELL_SIZE, GameController.CELL_SIZE * 2);
+
+            this.setHitbox(this.width, this.height * 0.5);
+        }
+    },
+
     WallTile: class WallTile extends dark.Sprite{
         constructor(x, y){
             super("wall", x, y, GameController.CELL_SIZE, GameController.CELL_SIZE * 2);

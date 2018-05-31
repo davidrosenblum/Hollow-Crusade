@@ -1,9 +1,18 @@
+/*
+    GameEvent
+    should be used as the events to listen for in the 'EventEmitter'
+    holds all expected event types used in the game
+
+    (David)
+*/
+
 let GameEvent = class GameEvent{
     constructor(type, target, value){
         this.type = type;
         this.target=  target;
         this.value = value;
-        this.emitter = null;
+        this.emitter = null;    // set when the event is emitted by an emitter
+        this.bubblers = null;   // set when the event is bubbled by an emitter
     }
 };
 GameEvent.BATTLE_CREATE = "battle-create";
@@ -14,6 +23,8 @@ GameEvent.BATTLE_ADD_ENEMY = "battle-add-enemy";
 GameEvent.BATTLE_REMOVE_ENEMY = "battle-remove-enemy";
 GameEvent.BATTLE_ADD_PLAYER = "battle-add-player";
 GameEvent.BATTLE_REMOVE_PLAYER = "battle-remove-player";
+GameEvent.PORTAL_NODE_CREATE = "portal-node-create";
+GameEvent.PORTAL_NODE_DELETE = "portal-node-delete";
 GameEvent.ROOM_ADD_OBJECT = "room-add-object";
 GameEvent.ROOM_REMOVE_OBJECT = "room-remove-object";
 GameEvent.ROOM_UPDATE_OBJECT = "room-update-object";
