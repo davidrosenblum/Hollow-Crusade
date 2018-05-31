@@ -73,8 +73,8 @@ let Room = class Room extends EventEmitter{
     }
 
     // travel portal
-    createPortalNode(gridX, gridY, exitRoomID=1){
-        let portal = new PortalNode(gridX, gridY, exitRoomID);
+    createPortalNode(gridX, gridY, instanceID, instanceName, text){
+        let portal = new PortalNode(gridX, gridY, instanceID, instanceName, text);
         this.portalNodes[portal.portalID] = portal;
         this.emit(new GameEvent(GameEvent.PORTAL_NODE_CREATE, portal));
     }

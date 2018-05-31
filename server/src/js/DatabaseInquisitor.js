@@ -1,6 +1,6 @@
 /*
     DatabaseInquisitor 
-    uses a mysql database connector to query the databas, includes....
+        uses a mysql database connector to query the databas, includes....
         * all table creation, selection, & insertion queries
         * account creation (with password salting/hashing) + password reset 
         * character creation / retrieval / update / deletion (CRUD!) 
@@ -256,7 +256,6 @@ let DatabaseInquisitor = class DatabaseInquisitor{
             `CREATE TABLE IF NOT EXISTS maps(
                 map_id INT UNIQUE NOT NULL,
                 name VARCHAR(255) UNIQUE NOT NULL,
-                min_level TINYINT NOT NULL DEFAULT 1,
                 start_x FLOAT NOT NULL DEFAULT 0,
                 start_y FLOAT NOT NULL DEFAULT 0,
                 PRIMARY KEY (map_id)
@@ -346,27 +345,27 @@ let DatabaseInquisitor = class DatabaseInquisitor{
     insertMaps(){
         // {map_id, name, min_level}
         this.conn.query(
-            `INSERT INTO maps VALUES(1, 'Titan''s Landing', 1, 100, 100)`,
+            `INSERT INTO maps VALUES(1, 'Titan''s Landing', 100, 100)`,
             err => {}
         );
         this.conn.query(
-            `INSERT INTO maps VALUES(2, 'Northern Keep', 10, 100, 100)`,
+            `INSERT INTO maps VALUES(2, 'Northern Keep', 100, 100)`,
             err => {}
         );/*
         this.conn.query(
-            `INSERT INTO maps VALUES(3, 'The Underground', 20, 0, 0)`,
+            `INSERT INTO maps VALUES(3, 'The Underground', 0, 0)`,
             err => {}
         );
         this.conn.query(
-            `INSERT INTO maps VALUES(4, 'Lost City', 30, 0, 0)`,
+            `INSERT INTO maps VALUES(4, 'Lost City', 0, 0)`,
             err => {}
         );*/
         this.conn.query(
-            `INSERT INTO maps VALUES(10, 'Graveyard', 1, 100, 100)`,
+            `INSERT INTO maps VALUES(10, 'Graveyard', 100, 100)`,
             err => {}
         );
         this.conn.query(
-            `INSERT INTO maps VALUES(11, 'Asylum', 6, 100, 100)`,
+            `INSERT INTO maps VALUES(11, 'Asylum', 100, 100)`,
             err => {}
         );
     }

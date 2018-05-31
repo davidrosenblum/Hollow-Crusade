@@ -6,8 +6,8 @@ let UIController = class UIController extends dark.EventEmitter{
         super();
     }
 
-    showLoading(message){
-        this.emit({type: "show-menu", menu: "loading", message: message});
+    showLoading(message, showBtn=false){
+        this.emit({type: "show-menu", menu: "loading", message: message, showBtn: showBtn});
     }
 
     showLogin(){
@@ -36,6 +36,10 @@ let UIController = class UIController extends dark.EventEmitter{
 
     hudChat(chat){
         this.emit({type: "hud-chat", chat: chat});
+    }
+
+    hudChatClear(){
+        this.emit({type: "hud-chat-clear"});
     }
 
     hudTarget(data){

@@ -18,6 +18,7 @@ class App extends React.Component{
         this.state = {
             currMenu: "",
             message: "",
+            showBtn: false,
             characterList: [],
             characterListLoading: false,
             modalMessage: ""
@@ -32,6 +33,11 @@ class App extends React.Component{
             });
 
             RequestSender.characterList();
+        }
+        else if(evt.menu === "loading"){
+            this.setState({
+                showBtn: evt.showBtn
+            })
         }
 
         this.setState({
@@ -67,7 +73,7 @@ class App extends React.Component{
     render(){
         return (
             <div>
-                <Loading currMenu={this.state.currMenu} message={this.state.message} />
+                <Loading currMenu={this.state.currMenu} message={this.state.message} showBtn={this.state.showBtn} />
                 <Login currMenu={this.state.currMenu} />
                 <CharacterSelect currMenu={this.state.currMenu} characterList={this.state.characterList} characterListLoading={this.state.characterListLoading} />
                 <CharacterCreate currMenu={this.state.currMenu} />

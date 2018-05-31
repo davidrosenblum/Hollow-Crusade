@@ -21,12 +21,14 @@ class Game extends React.Component{
         UIController.on("hud-target", this.onHudTarget.bind(this));
         UIController.on("hud-self", this.onHudSelf.bind(this));
         UIController.on("hud-chat", this.onHudChat.bind(this));
+        UIController.on("hud-chat-clear", this.onHudChatClear.bind(this));
     }
 
     componentWillUnmount(){
         UIController.removeListener("hud-target", this.onHudTarget.bind(this));
         UIController.removeListener("hud-self", this.onHudSelf.bind(this));
         UIController.removeListener("hud-chat", this.onHudChat.bind(this));
+        UIController.removeListener("hud-chat-clear", this.onHudChatClear.bind(this));
     }
 
     onHudTarget(evt){
@@ -42,6 +44,10 @@ class Game extends React.Component{
         updatedOutput += evt.chat;
 
         this.setState({chatOutput: updatedOutput});
+    }
+
+    onHudChatClear(evt){
+        this.setState({chatOutput: ""});
     }
 
     render(){

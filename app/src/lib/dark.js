@@ -143,6 +143,15 @@ let dark = (function(){
             return null;
         }
 
+        inRangeOf(target, distance=1){
+            let dblDistance = distance * 2;
+
+            let hitbox = new DisplayObject(this.drawX, this.drawY, this.width + dblDistance, this.height + dblDistance);
+            hitbox.x -= distance;
+            hitbox.y -= distance;
+            return hitbox.hitboxCollision(target);
+        }
+
         draw(){
             if(this.visible){
                 this.emit(new Event(Event.DRAW));
@@ -1241,13 +1250,17 @@ let dark = (function(){
                 intervalY = (typeof options.intervalY === "number") ? options.intervalY : 0,
                 width = (typeof options.width === "number") ? options.width : 0,
                 height = (typeof options.height === "number") ? options.height : 0,
-                frameCount = (typeof options.frameCount === "number") ? options.frameCount : 1;
+                frameCount = (typeof options.frameCount === "number") ? options.frameCount : 0;
+
+            if(!width) throw new Error("Unspecified 'options.width' for creating animation frames.");
+            if(!height) throw new Error("Unspecified 'options.height' for creating animation frames.");
+            if(!frameCount) throw new Error("Unspecified 'options.frameCount' for creating animation frames.");
 
             let frames = [];
             for(let i = 0; i < frameCount; i++){
                 frames.push(new AnimationFrameData(
-                    (i * intervalX + marginX) + offsetX,
-                    (i * intervalY + marginY) + offsetY,
+                    (i * intervalX + (i > 0 ? marginX: 0)) + offsetX,
+                    (i * intervalY + (i > 0 ? marginY : 0)) + offsetY,
                     width,
                     height
                 ));
@@ -1750,8 +1763,6 @@ let dark = (function(){
     };
 
     let kill = function(){
-        stage.forEachChild(child => child.remove());
-
         if(stage.canvas.parentNode){
             stage.canvas.parentNode.removeChild(stage.canvas);
         }

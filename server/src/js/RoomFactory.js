@@ -80,8 +80,15 @@ let RoomFactory = class RoomFactory{
     // attaches portals to travel between zones 
     static createPortals(room){
         if(room.roomName === "Titan's Landing"){
-            room.createPortalNode(10, 1, 2); // to northern keep
-            room.createPortalNode(10, 1, "Graveyard"); // to graveyard
+            room.createPortalNode(10, 1, 2, null, "Northern Keep"); // to northern keep
+            room.createPortalNode(12, 15, null, "Graveyard", "Graveyard Instance"); // to graveyard
+        }
+        else if(room.roomName === "Northern Keep"){
+            room.createPortalNode(2, 4, 1, null, "Titan's Landing"); // to TL 
+        }
+        else if(room.roomName === "Graveyard"){
+            room.createPortalNode(3, 1, 1, null, "Titan's Landing");
+            room.createPortalNode(18, 4, 1, null, "Titan's Landing");
         }
     }
 
