@@ -37,9 +37,9 @@ let Room = class Room extends EventEmitter{
     }
 
     // creates and storse a battle node, attaches event listeners and re-emits certain events
-    createBattleNode(x, y, npcs, ownerID=Owner.ENEMIES, teamID=Teams.ENEMIES){
+    createBattleNode(gridX, gridY, npcs, ownerID=Owner.ENEMIES, teamID=Teams.ENEMIES){
         // create and store node
-        let node = new BattleNode(x, y, ownerID, teamID, npcs);
+        let node = new BattleNode(gridX, gridY, ownerID, teamID, npcs);
         this.battleNodes[node.nodeID] = node;
 
         // attach enemy listeners, remove/add objects that the battle node does (battle node acts as a spawner)
@@ -129,7 +129,10 @@ let Room = class Room extends EventEmitter{
 
             // emit (server is listening)
             this.emit(new GameEvent(GameEvent.ROOM_ADD_OBJECT, object));
+
+            return true;
         }
+        return false;
     }
 
     // removes an object (expects objectID but oveloaded to take object ref itself)
@@ -147,7 +150,10 @@ let Room = class Room extends EventEmitter{
 
             this.emit(new GameEvent(GameEvent.ROOM_REMOVE_OBJECT, object));
             object.objectID = -1;
+
+            return true;
         }
+        return false;
     }
 
     // updates an object
@@ -157,7 +163,10 @@ let Room = class Room extends EventEmitter{
             object.applyUpdate(data);
 
             this.emit(new GameEvent(GameEvent.ROOM_UPDATE_OBJECT, object));
+
+            return object;
         }
+        return null;
     }
 
     // applies a lambda function to each socket

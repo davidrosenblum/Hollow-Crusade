@@ -19,6 +19,7 @@ let serverHost = "localhost",
 
 let Client = class Client{
     constructor(){
+        this.config = {};
         this.parseCommandArgs();
 
         this.conn = null;
@@ -29,6 +30,9 @@ let Client = class Client{
         this.VERSION = "0.1.0";
 
         AssetPreloader.preloadAssets();
+
+        /* remove this later */
+        window.gameClient = this;
     }
 
     bind(callback){
@@ -54,26 +58,20 @@ let Client = class Client{
     }
 
     parseCommandArgs(){
-        const SEARCH_FOR = ["--server-host=", "--tcp-port=", "--udp-port="],
-            PARAMS =       ["serverHost", "tcpPort", "udpPort"];
+        // process arguments are stored in the URL querystring
+        let qs = window.location.href.split("?")[1] || "";
+    
+        let params = {};
+        for(let arg of qs.split("&")){
+            let split = arg.split("=")
 
-        this.config = {
-            serverHost: "localhost",
-            tcpPort: 6615,
-            udpPort: 6617
-        };
-
-        for(let i = 0, arg; i < process.argv; i++){
-            arg = process.argv[i];
-
-            for(let j = 0; j < SEARCH_FOR.length; i++){
-                if(arg.indexOf(SEARCH_FOR[j]) > -1){
-                    this.config[PARAMS[j]] = arg.split(SEARCH_FOR[j])[1] || this.config[PARAMS[j]]; 
-                    break;
-                }
-            }
+            params[split[0]] = (split[1] || "true");
         }
 
+        this.config.serverHost = params["server-host"] || "localhost";
+        this.config.tcpPort = params["tcp-port"] || 6615;
+        this.config.udpPort = params["udp-port"] || 6617;
+        
         console.log(`Config=${JSON.stringify(this.config)}`);
     }
 
@@ -204,7 +202,7 @@ let Client = class Client{
 
     handleLogout(data, status){
         if(status === Status.GOOD){
-            this.socketID = -1;
+            //this.socketID = -1;
         }
         else{
             UIController.modal(data.message);

@@ -61,7 +61,7 @@ let RoomFactory = class RoomFactory{
     // create battle nodes for the created room 
     static populateRoom(room){
         if(room.roomName === "Graveyard"){
-            room.createBattleNode(96*4, 96*2,
+            room.createBattleNode(96*5, 96*3,
                 [
                     /*CombatObjects.SKELETON, CombatObjects.SKELETON, CombatObjects.ANIMUS, CombatObjects.SKELETON,*/
                     CombatObjects.SKELETON
@@ -81,7 +81,7 @@ let RoomFactory = class RoomFactory{
     static createPortals(room){
         if(room.roomName === "Titan's Landing"){
             room.createPortalNode(10, 1, 2, null, "Northern Keep"); // to northern keep
-            room.createPortalNode(12, 15, null, "Graveyard", "Graveyard Instance"); // to graveyard
+            room.createPortalNode(12, 15, null, "Graveyard", "Graveyard"); // to graveyard
         }
         else if(room.roomName === "Northern Keep"){
             room.createPortalNode(2, 4, 1, null, "Titan's Landing"); // to TL 

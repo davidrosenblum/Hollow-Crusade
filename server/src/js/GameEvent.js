@@ -33,6 +33,7 @@ GameEvent.ROOM_REMOVE_SOCKET = "room-remove-socket";
 GameEvent.UNIT_DODGE = "unit-dodge";
 GameEvent.UNIT_UPDATE = "unit-update";
 GameEvent.UNIT_DEATH = "unit-death";
+GameEvent.UNIT_POSITION_TO_GRID = "unit-position-to-grid";
 GameEvent.PLAYER_XP = "player-xp"
 GameEvent.PLAYER_LEVEL_UP = "player-level-up";
 GameEvent.PLAYER_MONEY = "player-money";

@@ -267,7 +267,9 @@ let GameController = class GameController extends dark.EventEmitter{
 
         if(this.scene.addChild(portal)){
             if(data.text){
-                let tf = new dark.TextField(`<${data.text} Portal>`);
+                let tf = new dark.TextField(
+                    `<${data.text} ${portal.instanceName ? "Instance" : ""} Portal>`
+                );
                 portal.addChild(tf);
                 tf.centerText();
                 
@@ -308,7 +310,7 @@ let GameController = class GameController extends dark.EventEmitter{
         if(this.hud.addChild(node)){
             let text = new dark.TextField(`<Enter Battle>`);
             node.addChild(text);
-            text.center();
+            text.centerText();
 
             node.on(dark.Event.CLICK, evt => {
                 if(!this.inBattle){

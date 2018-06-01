@@ -75,6 +75,9 @@ let closeSocket = function(socket){
     if(socket.room){
         socket.room.removeSocket(socket);
     }
+
+    socket.player = null;
+    delete sockets[socket.socketID];
 };
 
 let handleSocketData = function(socket, message){
@@ -125,6 +128,10 @@ let processSocketData = function(socket, opc, data){
     }
     else if(opc === OPC.CHAT_MESSAGE){
         processChat(socket, data.chat || "");
+    }
+    else if(opc === OPC.OBJECT_UPDATE){
+        // important updates dont use UDP
+        processObjectUpdateTCP(socket, data);
     }
     else if(opc === OPC.OBJECT_STATS){
         processObjectStats(socket, data.objectID || -1);
@@ -307,6 +314,16 @@ let processChat = function(socket, chat){
         }*/
         else{
             sendRoomChat(socket.room, chat, socket.player.name);
+        }
+    }
+};
+
+let processObjectUpdateTCP = function(socket, data){
+    if(socket.room){
+        let object = socket.room.updateObject(data);
+        
+        if(object){
+            
         }
     }
 };

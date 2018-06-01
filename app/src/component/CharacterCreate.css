@@ -8,3 +8,7 @@
     margin-left: 5px;
     margin-right: 5px;
 }
+
+#character-create-menu input:focus{
+    outline: none;
+}
