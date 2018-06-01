@@ -111,6 +111,7 @@ let GameCombatObject = class GameCombatObject extends GameObject{
         data.name = this.name;
         data.type = this.type;
         data.moveSpeed = this.moveSpeed;
+        //data.battleNodeID = (this.battleNode) ? this.battleNode.nodeID : -1;
 
         return data;
     }

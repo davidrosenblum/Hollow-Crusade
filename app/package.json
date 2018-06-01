@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "start": "react-scripts start",
+    "start": "electron ./build/index.js",
+    "react": "react-scripts start BROWSER=none",
     "electron": "electron ./public/index.js",
     "electron-test": "electron ./public/index.js -test",
     "build": "react-scripts build .",
